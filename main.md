@@ -96,9 +96,9 @@ gastronomia/
 - Four dishes in a data array with id, name, subtitle, season, description, image URL
 - Left panel: clickable list with active state (border color + text opacity changes)
 - Right panel: `sticky top-28` — image (`next/image` via `motion.create(Image)`) swaps via `AnimatePresence mode="wait"` (scale entrance)
-- Description also animated via `AnimatePresence`
+- Description animated via `AnimatePresence`; on desktop it lives inside the sticky panel, on mobile it's a separate block below the list (see mobile fix below)
 - Large ghost number overlay on image (10% opacity Playfair numeral)
-- **Issue:** Sticky panel is lost on mobile — layout collapses to stacked but `sticky` is useless there (rewrite planned in `gastromania-tasks.md` Блок 4.1)
+- **Fixed (2026-08-09):** sticky panel now works on mobile too — see Changelog v0.1.8. Order swap (`order-1`/`order-2`) puts the image panel first visually; a `ResizeObserver` on the dish list feeds its measured height into the image wrapper's `min-height` so the sticky panel has room to pin; on mobile the panel shows a compact image + name/season caption only (full description moved to its own block below the list) since the original image+description content was nearly as tall as the list itself, leaving no real "stick window". Root cause of the *complete* failure (not just a short window) was `overflow-hidden` on the `<section>` — any non-`visible` overflow on a sticky element's ancestor silently breaks `position: sticky`. Removed it from the section and moved the (unrelated) local clipping it was doing down to the two children that actually need it (Header badge, dish list) to contain their `x` entrance-animation offsets.
 - **Issue:** No touch/swipe navigation between dishes on mobile
 
 ### Reservation.tsx
@@ -214,7 +214,6 @@ Global: root layout wraps the tree in `MotionProvider` (`app/components/MotionPr
 - Chef section: stacked portrait on mobile, 50/50 on `lg:`
 - Dishes section: full-width stacked on mobile, 5/7 col split on `lg:`
 - **Known issue:** Gallery `row-span` CSS doesn't collapse cleanly on 2-col mobile
-- **Known issue:** Dishes sticky panel is lost on mobile layout
 
 ---
 
@@ -242,7 +241,6 @@ Resolved by Блок 1 (see Changelog v0.1.2): Hero LCP, missing `prefers-reduce
 
 ### Moderate (affects quality)
 2. **Grain texture SVG is duplicated** in Hero and Reservation — should be a single global overlay or utility class.
-3. **Dishes sticky panel lost on mobile** — The right-column sticky image panel doesn't adapt for mobile; the UX is broken below `lg:`. (Tracked in `gastromania-tasks.md` Блок 4, task 4.1 — component is being rewritten to read from DB anyway.)
 4. **Date input is browser-native** — Styled inconsistently across browsers; no min-date constraint.
 
 ### Minor (polish)
@@ -324,6 +322,32 @@ Resolved by Блок 1 (see Changelog v0.1.2): Hero LCP, missing `prefers-reduce
 ---
 
 ## Changelog
+
+### v0.1.8 — 2026-08-09
+- Точечный фикс вне очереди `gastromania-tasks.md` (по прямому запросу владельца, не Блок 4.1 — данные `dishes` остались хардкодом): `SignatureDishes.tsx` — sticky-панель с фото теперь реально работает на мобильном.
+  - Настоящая причина полной поломки: `overflow-hidden` на `<section id="dishes">` — любой не-`visible` overflow на предке ломает `position: sticky` у потомков. Убрано с секции; локальный клиппинг (нужен был только чтобы гасить `x`-смещение анимации входа у бейджа в хедере и у кнопок списка) перенесён точечно на эти два элемента.
+  - На мобильном `order-1`/`order-2` меняют визуальный порядок (фото → список), `ResizeObserver` на списке прокидывает его высоту в `min-height` обёртки фото — иначе панели физически не из чего «отлипать».
+  - Обнаружилось: с длинным описанием блюда панель фото была почти той же высоты, что и список — окно для sticky-эффекта получалось нулевым. Решение (подтверждено владельцем): на мобильном sticky-панель показывает только фото + название + сезон (компактно), полное описание блюда переехало отдельным блоком под список. На десктопе всё как было — описание внутри sticky-панели.
+  - Проверено: `npm run build` и `npm run lint` чистые (тот же единственный предсуществующий warning); поведение проверено через Playwright — панель фиксируется на `top: 112px` и корректно отпускается, тап по пункту списка меняет фото/подпись, пока панель зафиксирована.
+  - Найдено по ходу, не входило в задачу: на мобильном при загрузке страницы есть ~20px горизонтального скролла, не связанного с этим компонентом (подтверждено скрытием `#dishes` целиком — сдвиг остаётся) — похоже, от `x`-смещений анимации входа в другой секции. Записано в `gastromania-tasks.md` → «Найдено по ходу».
+
+### v0.1.7 — 2026-08-02
+- Блок 2, задача 2.5 — **Блок 2 закрыт**. Все три миграции (2.2–2.4) применены владельцем проекта в Supabase Dashboard и вручную проверены: тестовый пользователь → профиль создаётся автоматически, RLS работает (чужие брони/заказы не видны обычному пользователю, админ видит всё).
+- Сгенерирован `types/database.ts` (`supabase gen types typescript --project-id rqiqqeuqjgvlvngdhlhj --schema public`) — типы для всех 7 таблиц и функции `is_admin`, подтверждают, что живая схема совпадает с миграциями.
+- Ещё не сделано: `.env.local` — переменные `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` до сих пор пустые (см. `gastromania-tasks.md` → «Найдено по ходу»); `lib/supabase/client.ts`/`server.ts` пока не типизированы через `Database` — не входило в рамки 2.5.
+- Проверено: `npm run build` и `npm run lint` чистые (тот же единственный предсуществующий warning).
+
+### v0.1.6 — 2026-08-02
+- Блок 2, задача 2.4: `supabase/migrations/20260802000002_profile_on_signup.sql` — функция `public.handle_new_user()` (`security definer`, `set search_path = public`) + триггер `on_auth_user_created` (`after insert on auth.users`), создаёт строку в `public.profiles` при регистрации, подтягивая `full_name`/`phone` из `raw_user_meta_data`, если переданы при signup; `role`/`created_at` берутся по дефолтам таблицы. Этого триггера не было в SQL-блоке `gastromania-spec.md` — стандартный паттерн Supabase ("Managing User Data"), адаптирован под структуру `profiles` из задачи 2.2.
+- Проверено: `npm run build` и `npm run lint` чистые (тот же единственный предсуществующий warning). Миграции 2.2–2.4 ещё не применены к Supabase — следующий шаг: ручное применение и проверка в Dashboard (контрольная точка «Остановка» в `gastromania-tasks.md`), затем коммит.
+
+### v0.1.5 — 2026-08-02
+- Блок 2, задача 2.3: `supabase/migrations/20260802000001_add_rls_policies.sql` — функция `public.is_admin()` (`security definer`, проверяет `role = 'admin'` в `profiles`), `enable row level security` на всех 7 таблицах, все политики из `gastromania-spec.md`: свои/админ доступ к `profiles`; публичное чтение активных `menu_items`/`promotions` + полный доступ админу; вставка `reservations`/`orders` кем угодно, чтение своего или всё админу; `favorites` только свои; `delivery_settings` — чтение всем, запись админу.
+- Проверено: `npm run build` и `npm run lint` чистые (тот же единственный предсуществующий warning). Миграция ещё не применена к Supabase — вместе с 2.2 и 2.4 идёт на общую проверку в Dashboard (контрольная точка «Остановка» в `gastromania-tasks.md`).
+
+### v0.1.4 — 2026-08-01
+- Блок 2, задача 2.2: `supabase/migrations/20260801000001_create_core_tables.sql` — все 7 таблиц из `gastromania-spec.md` (Этап 3): `profiles`, `menu_items`, `promotions`, `reservations`, `orders`, `favorites`, `delivery_settings`. Без RLS/`is_admin()` — это отдельная миграция, задача 2.3. Добавлена сидовая строка `insert into delivery_settings (id) values (1)`, чтобы синглтон-таблица настроек доставки не была пустой для `/admin/delivery` (задача 7.5); только дефолты таблицы, без выдуманного контента.
+- Проверено: `npm run build` и `npm run lint` чистые (тот же единственный предсуществующий warning). Миграция ещё не применена к Supabase — применение и ручная проверка идут после задач 2.2–2.4 вместе (контрольная точка «Остановка» в `gastromania-tasks.md`).
 
 ### v0.1.3 — 2026-08-01
 - Блок 2, задача 2.1: установлены `@supabase/supabase-js` и `@supabase/ssr`; добавлены `lib/supabase/client.ts` (браузерный клиент через `createBrowserClient`) и `lib/supabase/server.ts` (серверный клиент через `createServerClient`, `cookies()` из `next/headers` — асинхронный API в этой версии Next.js, `getAll`/`setAll` вместо deprecated `get`/`set`/`remove`); созданы `.env.local` (пустые значения, ключи вставляет владелец) и `.env.example`; создан `.gitignore` (в проекте его не было вообще — как и самого git-репозитория).

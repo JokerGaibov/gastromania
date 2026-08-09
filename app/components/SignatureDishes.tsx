@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
@@ -56,14 +56,30 @@ const dishes = [
 export default function SignatureDishes() {
   const [activeIndex, setActiveIndex] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState<number>();
   const inView = useInView(sectionRef, { once: true, margin: "-5%" });
 
+  // On mobile the list and image stack into separate grid rows, so the image's
+  // wrapper has no extra height for its inner `sticky` panel to pin within.
+  // Matching it to the list's measured height gives sticky the room it needs
+  // (desktop already gets this for free via grid row-stretch).
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const update = () => setListHeight(el.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section id="dishes" ref={sectionRef} className="bg-[#0F0F0D] py-32 lg:py-48 overflow-hidden">
+    <section id="dishes" ref={sectionRef} className="bg-[#0F0F0D] py-32 lg:py-48">
       <div className="max-w-screen-xl mx-auto px-8 lg:px-16">
 
         {/* Header */}
-        <div className="grid lg:grid-cols-2 gap-12 mb-20 lg:mb-28">
+        <div className="grid lg:grid-cols-2 gap-12 mb-20 lg:mb-28 overflow-hidden">
           <div>
             <motion.div
               initial={{ opacity: 0, x: -15 }}
@@ -120,7 +136,7 @@ export default function SignatureDishes() {
         <div className="grid lg:grid-cols-12 gap-6 lg:gap-12">
 
           {/* Dish List */}
-          <div className="lg:col-span-5 flex flex-col">
+          <div ref={listRef} className="order-2 lg:order-1 lg:col-span-5 flex flex-col overflow-hidden">
             {dishes.map((dish, i) => (
               <motion.button
                 key={dish.id}
@@ -170,10 +186,13 @@ export default function SignatureDishes() {
           </div>
 
           {/* Dish Image & Detail */}
-          <div className="lg:col-span-7">
-            <div className="sticky top-28">
+          <div
+            className="order-1 lg:order-2 lg:col-span-7"
+            style={listHeight ? { minHeight: listHeight } : undefined}
+          >
+            <div className="sticky top-28 bg-[#0F0F0D] pb-6 lg:pb-0">
               {/* Image */}
-              <div className="relative aspect-[4/3] overflow-hidden bg-[#1A1A1A] mb-8">
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#1A1A1A] mb-5 lg:mb-8">
                 <AnimatePresence mode="wait">
                   <MotionImage
                     key={activeIndex}
@@ -199,7 +218,28 @@ export default function SignatureDishes() {
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Compact caption — mobile only. Keeps the sticky panel short enough
+                  to actually have room to pin above the (comparably tall) list;
+                  the full description moves below the list on mobile instead. */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeIndex}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.4 }}
+                  className="flex items-center justify-between gap-4 lg:hidden"
+                >
+                  <h3 className="heading-editorial text-[#F5F0E8]" style={{ fontSize: "clamp(1.1rem, 4vw, 1.4rem)" }}>
+                    {dishes[activeIndex].name}
+                  </h3>
+                  <span className="label-refined text-[#8C7355] flex-shrink-0">
+                    {dishes[activeIndex].season}
+                  </span>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Description — desktop only, inside the sticky panel */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeIndex}
@@ -207,6 +247,7 @@ export default function SignatureDishes() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.5 }}
+                  className="hidden lg:block"
                 >
                   <p
                     style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300, letterSpacing: "0.01em" }}
@@ -217,6 +258,26 @@ export default function SignatureDishes() {
                 </motion.div>
               </AnimatePresence>
             </div>
+          </div>
+
+          {/* Description — mobile only, below the list */}
+          <div className="order-3 lg:hidden pt-10 border-t border-[rgba(245,240,232,0.08)]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.5 }}
+              >
+                <p
+                  style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300, letterSpacing: "0.01em" }}
+                  className="text-[#F5F0E8]/65 text-lg italic leading-relaxed"
+                >
+                  {dishes[activeIndex].description}
+                </p>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
 
