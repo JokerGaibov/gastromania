@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gastromania
+
+Restaurant website with online reservations and delivery ordering, built for a real, operating restaurant. Not a template or a portfolio piece — staff rely on it for incoming orders and bookings.
+
+**Status:** active development. Core layout and design system are in place; the operational backend (Supabase) is being built out section by section — see [`gastromania-spec.md`](./gastromania-spec.md) for the current scope and rollout stages, and [`main.md`](./main.md) for the full audit, changelog, and architectural decisions.
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS 4 |
+| Animation | Framer Motion |
+| Backend | Supabase (Postgres, Auth, RLS, Edge Functions) |
+| Deployment | Vercel |
+
+No UI component library — components are custom-built.
+
+## Features
+
+**Shipped**
+- Marketing site: hero, story, chef profile, signature dishes, gallery, contact
+- Reservation form (front-end)
+
+**In progress / planned**
+- Supabase-backed data model: menu, promotions, reservations, orders, favorites, delivery settings (with row-level security)
+- Customer accounts (`/account`) and admin panel (`/admin`)
+- Delivery ordering with cart, pay-on-delivery at launch
+- Kitchen notifications via Telegram bot (Supabase DB webhooks + Edge Functions)
+- Stop-list (86'd items) toggle for the kitchen
+- 152-FZ privacy policy and consent flow
+- Yandex Metrica + Yandex Maps integration
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+cp .env.example .env.local   # fill in Supabase project keys
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> This project pins a Next.js version with breaking changes vs. older training data — see [`AGENTS.md`](./AGENTS.md) before making Next.js-specific changes.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Proprietary — all rights reserved. This is a commercial project built for a client; the code is not licensed for reuse.
