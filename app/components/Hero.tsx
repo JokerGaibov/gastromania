@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Image from "next/image";
+import { smoothScrollTo } from "@/lib/motion";
+import MagneticButton from "./MagneticButton";
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -110,17 +112,17 @@ export default function Hero() {
               Камерное путешествие сквозь сезоны. Восемнадцать гостей, одно вечернее видение.
             </p>
             <div className="flex items-center gap-6">
-              <button
-                onClick={() => {
-                  document.querySelector("#reservation")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="group flex items-center gap-4"
-              >
-                <span className="label-refined text-[#F5F0E8] group-hover:text-[#8C7355] transition-colors duration-300">
-                  Забронировать вечер
-                </span>
-                <span className="w-8 h-px bg-[#8C7355] group-hover:w-12 transition-all duration-500" />
-              </button>
+              <MagneticButton>
+                <button
+                  onClick={() => smoothScrollTo("#reservation")}
+                  className="group flex items-center gap-4"
+                >
+                  <span className="label-refined text-[#F5F0E8] group-hover:text-[#8C7355] transition-colors duration-300">
+                    Забронировать вечер
+                  </span>
+                  <span className="w-8 h-px bg-[#8C7355] group-hover:w-12 transition-all duration-500" />
+                </button>
+              </MagneticButton>
             </div>
           </motion.div>
         </div>

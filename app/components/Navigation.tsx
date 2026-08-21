@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { smoothScrollTo } from "@/lib/motion";
+import MagneticButton from "./MagneticButton";
 
 const navLinks = [
   { label: "История", href: "#story" },
@@ -14,6 +16,7 @@ const navLinks = [
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeHref, setActiveHref] = useState<string>("");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -21,10 +24,28 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    const sections = navLinks
+      .map((link) => document.querySelector<HTMLElement>(link.href))
+      .filter((el): el is HTMLElement => !!el);
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length === 0) return;
+        const top = visible.reduce((a, b) => (a.intersectionRatio > b.intersectionRatio ? a : b));
+        setActiveHref(`#${top.target.id}`);
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   const handleLinkClick = (href: string) => {
     setMenuOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    smoothScrollTo(href);
   };
 
   return (
@@ -66,7 +87,9 @@ export default function Navigation() {
               <button
                 key={link.href}
                 onClick={() => handleLinkClick(link.href)}
-                className="nav-link label-refined text-[#F5F0E8]/70 hover:text-[#F5F0E8] transition-colors duration-300"
+                className={`nav-link label-refined transition-colors duration-300 ${
+                  activeHref === link.href ? "text-[#8C7355] nav-link-active" : "text-[#F5F0E8]/70 hover:text-[#F5F0E8]"
+                }`}
               >
                 {link.label}
               </button>
@@ -76,12 +99,14 @@ export default function Navigation() {
           {/* Reserve CTA */}
           <div className="hidden lg:flex items-center gap-8">
             <div className="w-px h-5 bg-[rgba(245,240,232,0.2)]" />
-            <button
-              onClick={() => handleLinkClick("#reservation")}
-              className="label-refined text-[#8C7355] hover:text-[#F5F0E8] transition-colors duration-300"
-            >
-              Забронировать столик
-            </button>
+            <MagneticButton>
+              <button
+                onClick={() => handleLinkClick("#reservation")}
+                className="label-refined text-[#8C7355] hover:text-[#F5F0E8] transition-colors duration-300"
+              >
+                Забронировать столик
+              </button>
+            </MagneticButton>
           </div>
 
           {/* Mobile Menu Button */}

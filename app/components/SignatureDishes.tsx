@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { smoothScrollTo } from "@/lib/motion";
+import MagneticButton from "./MagneticButton";
 
 const MotionImage = motion.create(Image);
 
@@ -291,15 +293,17 @@ export default function SignatureDishes() {
           <p className="text-[#F5F0E8]/35 text-sm font-body" style={{ letterSpacing: "0.06em" }}>
             ДЕГУСТАЦИОННОЕ МЕНЮ · 18 БЛЮД · СЕЗОННОЕ
           </p>
-          <button
-            onClick={() => document.querySelector("#reservation")?.scrollIntoView({ behavior: "smooth" })}
-            className="group flex items-center gap-4 hover:gap-6 transition-all duration-500"
-          >
-            <span className="label-refined text-[#F5F0E8]/70 group-hover:text-[#F5F0E8] transition-colors">
-              Полное меню
-            </span>
-            <div className="w-8 h-px bg-[#8C7355]" />
-          </button>
+          <MagneticButton>
+            <button
+              onClick={() => smoothScrollTo("#reservation")}
+              className="group flex items-center gap-4 hover:gap-6 transition-all duration-500"
+            >
+              <span className="label-refined text-[#F5F0E8]/70 group-hover:text-[#F5F0E8] transition-colors">
+                Полное меню
+              </span>
+              <div className="w-8 h-px bg-[#8C7355]" />
+            </button>
+          </MagneticButton>
         </motion.div>
       </div>
     </section>
