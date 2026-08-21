@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Cormorant_Garamond, Inter } from "next/font/google";
 import MotionProvider from "./components/MotionProvider";
-import CustomCursor from "./components/CustomCursor";
 import ScrollProgress from "./components/ScrollProgress";
 import "./globals.css";
 
@@ -53,7 +52,6 @@ export default function RootLayout({
       <body className="min-h-full antialiased">
         <MotionProvider>
           <ScrollProgress />
-          <CustomCursor />
           {children}
         </MotionProvider>
       </body>
