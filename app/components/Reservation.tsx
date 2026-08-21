@@ -2,6 +2,12 @@
 
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import FieldShell from "./reservation/FieldShell";
+import Dropdown from "./reservation/Dropdown";
+import Calendar from "./reservation/Calendar";
+import PhoneField from "./reservation/PhoneField";
+import { UserIcon, MailIcon, NoteIcon, ClockIcon, UsersIcon } from "./reservation/icons";
+import { GUEST_COUNTS, TIME_SLOTS, isRuPhoneComplete, pluralizeGuests } from "./reservation/utils";
 
 const ease = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
 const springIn = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -13,13 +19,70 @@ const details = [
   { label: "Дресс-код", value: "Smart Casual" },
 ];
 
+const COMMENT_MAX = 240;
+
+// Mirrors the `reservations` table columns from gastromania-spec.md (Этап 3)
+// so Блок 5, задача 5.1 (gastromania-tasks.md) can wire this straight to a
+// Supabase server action without reshaping the form state.
+type ReservationForm = {
+  guestName: string;
+  guestPhone: string;
+  guestEmail: string;
+  partySize: number | null;
+  date: Date | null;
+  time: string | null;
+  comment: string;
+};
+
+const emptyForm: ReservationForm = {
+  guestName: "",
+  guestPhone: "",
+  guestEmail: "",
+  partySize: null,
+  date: null,
+  time: null,
+  comment: "",
+};
+
+type FormErrors = Partial<Record<keyof ReservationForm, string>>;
+
+function validate(form: ReservationForm): FormErrors {
+  const errors: FormErrors = {};
+  if (!form.guestName.trim()) errors.guestName = "Укажите имя";
+  if (!isRuPhoneComplete(form.guestPhone)) errors.guestPhone = "Укажите номер полностью";
+  if (!form.date) errors.date = "Выберите дату";
+  if (!form.time) errors.time = "Выберите время";
+  if (!form.partySize) errors.partySize = "Укажите количество гостей";
+  return errors;
+}
+
+const cardVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.15 } },
+};
+const fieldVariants = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease } },
+};
+const fieldHover = { y: -3, transition: { type: "spring" as const, stiffness: 320, damping: 22 } };
+
 export default function Reservation() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: true, margin: "-10%" });
+  const [form, setForm] = useState<ReservationForm>(emptyForm);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
+
+  const setField = <K extends keyof ReservationForm>(key: K, value: ReservationForm[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const nextErrors = validate(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
     setSubmitted(true);
   };
 
@@ -39,7 +102,7 @@ export default function Reservation() {
       />
 
       <div className="relative max-w-screen-xl mx-auto px-8 lg:px-16">
-        <div className="grid lg:grid-cols-12 gap-16 lg:gap-24">
+        <div className="grid lg:grid-cols-12 gap-16 lg:gap-12">
 
           {/* Left — headline + details */}
           <div className="lg:col-span-5 flex flex-col justify-center">
@@ -94,126 +157,152 @@ export default function Reservation() {
             </motion.div>
           </div>
 
-          {/* Right — Form */}
-          <div className="lg:col-span-7">
+          {/* Right — Booking card */}
+          <div className="lg:col-span-7 flex lg:justify-end">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={inView ? { opacity: 1 } : {}}
-              transition={{ duration: 0.9, delay: 0.3, ease }}
-              className="border border-[#0A0A0A]/10 p-10 lg:p-16"
+              initial={{ opacity: 0, y: 24, scale: 0.98 }}
+              animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+              transition={{ duration: 0.8, delay: 0.25, ease }}
+              className="w-full max-w-[520px] rounded-[24px] border border-[#0A0A0A]/8 bg-white shadow-[0_30px_80px_-24px_rgba(10,10,10,0.2)] p-7 sm:p-10"
             >
               {!submitted ? (
-                <form onSubmit={handleSubmit} className="flex flex-col gap-10">
-                  <div className="grid sm:grid-cols-2 gap-10">
-                    {["Имя", "Фамилия"].map((ph, i) => (
-                      <motion.div
-                        key={ph}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={inView ? { opacity: 1, y: 0 } : {}}
-                        transition={{ duration: 0.7, delay: 0.4 + i * 0.07, ease }}
-                      >
-                        <input type="text" required placeholder={ph} className="refined" style={{ color: "#0A0A0A" }} />
-                      </motion.div>
-                    ))}
+                <>
+                  <div className="mb-8">
+                    <h3 className="heading-editorial text-[#0A0A0A] mb-2" style={{ fontSize: "1.75rem" }}>
+                      Оформление брони
+                    </h3>
+                    <p className="text-[#0A0A0A]/45 text-sm font-body" style={{ letterSpacing: "0.02em" }}>
+                      Ответ приходит в течение 24 часов
+                    </p>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-10">
-                    {[
-                      { type: "email", ph: "Email" },
-                      { type: "tel", ph: "Номер телефона" },
-                    ].map(({ type, ph }, i) => (
-                      <motion.div
-                        key={ph}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={inView ? { opacity: 1, y: 0 } : {}}
-                        transition={{ duration: 0.7, delay: 0.55 + i * 0.07, ease }}
-                      >
-                        <input type={type} required={type === "email"} placeholder={ph} className="refined" style={{ color: "#0A0A0A" }} />
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-10">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={inView ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.7, delay: 0.7, ease }}
-                    >
-                      <input type="date" required className="refined" style={{ color: "#0A0A0A", colorScheme: "light" }} />
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={inView ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.7, delay: 0.77, ease }}
-                      className="relative"
-                    >
-                      <select required className="refined" style={{ color: "#0A0A0A" }} defaultValue="">
-                        <option value="" disabled>Гостей</option>
-                        {[1, 2, 3, 4, 5, 6].map((n) => (
-                          <option key={n} value={n}>{n} {n === 1 ? "гость" : "гостя(ей)"}</option>
-                        ))}
-                      </select>
-                      <div className="absolute right-0 bottom-4 pointer-events-none text-[#8C7355] text-xs">▾</div>
-                    </motion.div>
-                  </div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.7, delay: 0.84, ease }}
+                  <motion.form
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate={inView ? "show" : "hidden"}
+                    onSubmit={handleSubmit}
+                    noValidate
+                    className="flex flex-col gap-5"
                   >
-                    <textarea
-                      placeholder="Особый повод или требования к питанию"
-                      rows={2}
-                      className="refined resize-none"
-                      style={{ color: "#0A0A0A" }}
-                    />
-                  </motion.div>
+                    <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                      <FieldShell label="Имя" icon={<UserIcon />} htmlFor="res-name" error={errors.guestName}>
+                        <input
+                          id="res-name"
+                          type="text"
+                          autoComplete="name"
+                          placeholder="Введите имя"
+                          value={form.guestName}
+                          onChange={(e) => setField("guestName", e.target.value)}
+                          className="w-full bg-transparent outline-none text-[0.9375rem] text-[#0A0A0A] font-body placeholder:text-[#0A0A0A]/30"
+                        />
+                      </FieldShell>
+                    </motion.div>
 
-                  {/* Wine pairing toggle */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.7, delay: 0.91, ease }}
-                    className="flex items-center justify-between py-4 border-b border-[#0A0A0A]/10"
-                  >
-                    <div>
-                      <span className="label-refined text-[#0A0A0A]/60">Винная пара — 1 400 DKK</span>
-                      <p className="text-[#0A0A0A]/40 text-xs mt-0.5 font-body" style={{ letterSpacing: "0.02em" }}>
-                        12 вин, подобранных сомелье Никласом Равном
-                      </p>
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                        <PhoneField
+                          id="res-phone"
+                          value={form.guestPhone}
+                          onChange={(v) => setField("guestPhone", v)}
+                          error={errors.guestPhone}
+                        />
+                      </motion.div>
+                      <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                        <FieldShell label="Email (необязательно)" icon={<MailIcon />} htmlFor="res-email">
+                          <input
+                            id="res-email"
+                            type="email"
+                            autoComplete="email"
+                            placeholder="you@example.com"
+                            value={form.guestEmail}
+                            onChange={(e) => setField("guestEmail", e.target.value)}
+                            className="w-full bg-transparent outline-none text-[0.9375rem] text-[#0A0A0A] font-body placeholder:text-[#0A0A0A]/30"
+                          />
+                        </FieldShell>
+                      </motion.div>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" />
-                      <div className="w-10 h-5 bg-[#0A0A0A]/15 rounded-full peer peer-checked:bg-[#8C7355] transition-colors duration-300 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-4 after:h-4 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-5" />
-                    </label>
-                  </motion.div>
 
-                  {/* Submit */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.7, delay: 0.98, ease }}
-                  >
-                    <button
-                      type="submit"
-                      className="w-full py-4 bg-[#0A0A0A] text-[#F5F0E8] label-refined hover:bg-[#1C1C1C] transition-colors duration-300 relative overflow-hidden group"
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                        <Calendar
+                          id="res-date"
+                          label="Дата"
+                          placeholder="Выберите дату"
+                          value={form.date}
+                          onChange={(d) => setField("date", d)}
+                          error={errors.date}
+                        />
+                      </motion.div>
+                      <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                        <Dropdown
+                          id="res-time"
+                          label="Время"
+                          icon={<ClockIcon />}
+                          placeholder="Выберите время"
+                          options={TIME_SLOTS.map((t) => ({ value: t, label: t }))}
+                          value={form.time}
+                          onChange={(v) => setField("time", v)}
+                          error={errors.time}
+                        />
+                      </motion.div>
+                      <motion.div variants={fieldVariants} whileHover={fieldHover} className="sm:col-span-2">
+                        <Dropdown
+                          id="res-guests"
+                          label="Гости"
+                          icon={<UsersIcon />}
+                          placeholder="Количество гостей"
+                          options={GUEST_COUNTS.map((n) => ({ value: String(n), label: `${n} ${pluralizeGuests(n)}` }))}
+                          value={form.partySize ? String(form.partySize) : null}
+                          onChange={(v) => setField("partySize", Number(v))}
+                          error={errors.partySize}
+                        />
+                      </motion.div>
+                    </div>
+
+                    <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                      <FieldShell label="Комментарий (необязательно)" icon={<NoteIcon />} htmlFor="res-comment">
+                        <textarea
+                          id="res-comment"
+                          rows={3}
+                          maxLength={COMMENT_MAX}
+                          placeholder="День рождения, стол у окна, будем с ребёнком…"
+                          value={form.comment}
+                          onChange={(e) => setField("comment", e.target.value)}
+                          className="w-full bg-transparent outline-none resize-none text-[0.9375rem] text-[#0A0A0A] font-body placeholder:text-[#0A0A0A]/30"
+                        />
+                        <span
+                          className={`block text-right mt-1 text-xs font-body ${
+                            form.comment.length >= COMMENT_MAX ? "text-[#8C7355]" : "text-[#0A0A0A]/25"
+                          }`}
+                        >
+                          {form.comment.length}/{COMMENT_MAX}
+                        </span>
+                      </FieldShell>
+                    </motion.div>
+
+                    <motion.div variants={fieldVariants}>
+                      <motion.button
+                        type="submit"
+                        whileHover={{ scale: 1.015, boxShadow: "0 16px 40px -10px rgba(10,10,10,0.35)" }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 24 }}
+                        className="w-full mt-2 rounded-[14px] bg-[#0A0A0A] text-[#F5F0E8] label-refined relative overflow-hidden group"
+                        style={{ height: "56px" }}
+                      >
+                        <span className="relative z-10">Отправить запрос</span>
+                        <span className="absolute inset-0 bg-[#8C7355] translate-y-full group-hover:translate-y-0 transition-transform duration-500" style={{ transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)" }} />
+                      </motion.button>
+                    </motion.div>
+
+                    <motion.p
+                      variants={fieldVariants}
+                      className="text-[#0A0A0A]/35 text-xs font-body text-center"
+                      style={{ letterSpacing: "0.04em" }}
                     >
-                      <span className="relative z-10">Отправить запрос</span>
-                      <span className="absolute inset-0 bg-[#8C7355] translate-y-full group-hover:translate-y-0 transition-transform duration-500" style={{ transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)" }} />
-                    </button>
-                  </motion.div>
-
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={inView ? { opacity: 1 } : {}}
-                    transition={{ duration: 0.7, delay: 1.05, ease }}
-                    className="text-[#0A0A0A]/35 text-xs font-body text-center"
-                    style={{ letterSpacing: "0.04em" }}
-                  >
-                    Ваш запрос будет подтверждён в течение 24 часов. Для удержания брони требуется банковская карта.
-                  </motion.p>
-                </form>
+                      Ваш запрос будет подтверждён в течение 24 часов.
+                    </motion.p>
+                  </motion.form>
+                </>
               ) : (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
