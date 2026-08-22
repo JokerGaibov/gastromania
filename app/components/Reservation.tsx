@@ -6,6 +6,7 @@ import FieldShell from "./reservation/FieldShell";
 import Dropdown from "./reservation/Dropdown";
 import Calendar from "./reservation/Calendar";
 import PhoneField from "./reservation/PhoneField";
+import ConsentCheckbox from "./reservation/ConsentCheckbox";
 import { UserIcon, MailIcon, NoteIcon, ClockIcon, UsersIcon } from "./reservation/icons";
 import {
   GUEST_COUNTS,
@@ -40,6 +41,7 @@ type ReservationForm = {
   date: Date | null;
   time: string | null;
   comment: string;
+  consentGiven: boolean;
 };
 
 const emptyForm: ReservationForm = {
@@ -50,6 +52,7 @@ const emptyForm: ReservationForm = {
   date: null,
   time: null,
   comment: "",
+  consentGiven: false,
 };
 
 type FormErrors = Partial<Record<keyof ReservationForm, string>>;
@@ -63,6 +66,9 @@ function validate(form: ReservationForm): FormErrors {
   if (!form.partySize) errors.partySize = "Укажите количество гостей";
   if (form.guestEmail.trim() && !isValidEmail(form.guestEmail.trim())) {
     errors.guestEmail = "Проверьте адрес email";
+  }
+  if (!form.consentGiven) {
+    errors.consentGiven = "Нужно согласие на обработку персональных данных";
   }
   return errors;
 }
@@ -112,6 +118,7 @@ export default function Reservation() {
         dateISO: form.date ? toDateOnlyISO(form.date) : null,
         time: form.time,
         comment: form.comment,
+        consentGiven: form.consentGiven,
       });
 
       if (result.ok) {
@@ -325,6 +332,15 @@ export default function Reservation() {
                           {form.comment.length}/{COMMENT_MAX}
                         </span>
                       </FieldShell>
+                    </motion.div>
+
+                    <motion.div variants={fieldVariants}>
+                      <ConsentCheckbox
+                        id="res-consent"
+                        checked={form.consentGiven}
+                        onChange={(v) => setField("consentGiven", v)}
+                        error={errors.consentGiven}
+                      />
                     </motion.div>
 
                     {status === "error" && serverError && (

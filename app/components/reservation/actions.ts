@@ -11,6 +11,7 @@ export type ReservationPayload = {
   dateISO: string | null; // "YYYY-MM-DD"
   time: string | null; // "HH:MM"
   comment: string;
+  consentGiven: boolean;
 };
 
 export type ReservationResult = { ok: true } | { ok: false; error: string };
@@ -18,6 +19,8 @@ export type ReservationResult = { ok: true } | { ok: false; error: string };
 // Mirrors the client-side checks in Reservation.tsx, but this is the copy
 // that actually gates the database write — the client's validation only
 // exists for instant UX feedback and can't be trusted on its own (req. 7).
+// Consent is checked here too — a request without it never reaches the
+// insert, regardless of what the client claims.
 function validate(payload: ReservationPayload): string | null {
   if (!payload.guestName.trim()) return "Укажите имя.";
   if (!isRuPhoneComplete(payload.guestPhone)) return "Укажите номер телефона полностью.";
@@ -26,6 +29,9 @@ function validate(payload: ReservationPayload): string | null {
   if (!payload.partySize || payload.partySize < 1) return "Укажите количество гостей.";
   if (payload.guestEmail.trim() && !isValidEmail(payload.guestEmail.trim())) {
     return "Проверьте адрес email.";
+  }
+  if (!payload.consentGiven) {
+    return "Нужно согласие на обработку персональных данных.";
   }
   return null;
 }
@@ -57,6 +63,11 @@ export async function submitReservation(payload: ReservationPayload): Promise<Re
     reserved_at: reservedAt,
     comment: payload.comment.trim() || null,
     status: "new",
+    // The moment consent was validated and accepted server-side — not a
+    // client-supplied timestamp, and distinct from the column's own
+    // `default now()` (which would just mean "row was inserted", not
+    // "guest actually consented").
+    consent_at: new Date().toISOString(),
   });
 
   if (error) {

@@ -1,5 +1,13 @@
 "use client";
 
+import Link from "next/link";
+
+const legalLinks = [
+  { label: "Конфиденциальность", href: "/privacy" },
+  { label: "Доступность", href: "#" },
+  { label: "Пресса", href: "#" },
+];
+
 export default function Footer() {
   return (
     <footer className="bg-[#0A0A0A] border-t border-[rgba(245,240,232,0.06)] py-16">
@@ -34,14 +42,14 @@ export default function Footer() {
 
           {/* Right — Links */}
           <div className="flex gap-8">
-            {["Конфиденциальность", "Доступность", "Пресса"].map((link) => (
-              <a
-                key={link}
-                href="#"
+            {legalLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
                 className="label-refined text-[#F5F0E8]/25 hover:text-[#F5F0E8]/60 transition-colors duration-300"
               >
-                {link}
-              </a>
+                {link.label}
+              </Link>
             ))}
           </div>
         </div>

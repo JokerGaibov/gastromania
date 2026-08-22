@@ -106,3 +106,11 @@ export function ChevronRightIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function CheckIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} strokeWidth={2}>
+      <polyline points="5 12.5 10 17 19 7" />
+    </svg>
+  );
+}
