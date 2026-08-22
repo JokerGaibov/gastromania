@@ -47,10 +47,22 @@ gastronomia/
 │       ├── Story.tsx              ← Philosophy section with image mosaic + stats
 │       ├── Chef.tsx               ← 50/50 portrait + biography section
 │       ├── SignatureDishes.tsx    ← Interactive dish explorer with live image swap
-│       ├── Reservation.tsx        ← Booking form with success state
+│       ├── Reservation.tsx        ← Booking form, premium card UI, writes to Supabase
+│       ├── reservation/           ← Reservation subcomponents (card UI + Supabase wiring)
+│       │   ├── FieldShell.tsx     ← Shared field-card chrome (border/radius/shadow/focus)
+│       │   ├── Calendar.tsx       ← Hand-rolled date popover (disables past + closed days)
+│       │   ├── Dropdown.tsx       ← Generic listbox popover (time slots, guest count)
+│       │   ├── PhoneField.tsx     ← RU phone mask input, no external dep
+│       │   ├── icons.tsx          ← Hand-drawn line icons for the field set
+│       │   ├── utils.ts           ← Mask/pluralization/email helpers + time/guest constants
+│       │   └── actions.ts         ← "use server" — validates + inserts into `reservations`
 │       ├── Gallery.tsx            ← Editorial grid with lightbox
 │       ├── Contact.tsx            ← Address, hours, contact details
 │       └── Footer.tsx             ← Minimal footer with Michelin notation
+├── lib/
+│   └── supabase/
+│       ├── client.ts              ← Browser client, typed with `Database`
+│       └── server.ts              ← Server client (cookies-based), typed with `Database`
 ```
 
 ---
@@ -103,13 +115,40 @@ gastronomia/
 
 ### Reservation.tsx
 - `bg-[#F5F0E8]` cream background — contrast reversal from surrounding dark sections
-- 5-column / 7-column split on lg
-- Grain texture overlay (SVG data URI, same as Hero — duplicated)
-- Form fields use `.refined` CSS class (custom bottom-border only inputs)
-- Wine pairing toggle using Tailwind `peer` trick (no JS)
-- Submit transitions to thank-you state (local `submitted` state)
-- **Issue:** Form submits to void — no API endpoint, no email service
-- **Issue:** Date input appearance is browser-native and not styled
+- 5-column / 7-column split on lg; right column holds a self-contained ~520px booking
+  card (white, `rounded-[24px]`, soft shadow) rather than a stretched bordered box —
+  redesigned from the original underline-style inputs into bordered field-cards
+  (`FieldShell`) with hover lift and a bronze focus ring
+- Grain texture overlay (SVG data URI, same as Hero — duplicated, still tracked as a
+  Moderate known issue below)
+- Fields: Имя, Телефон (RU mask), Email (optional), Дата (custom `Calendar` popover —
+  disables past dates and the restaurant's closed days, Sun/Mon), Время (`Dropdown`,
+  fixed slots), Гости (`Dropdown`, 1–6, correct RU pluralization), Комментарий
+  (240-char counter). No wine-pairing toggle in the form (dropped in the redesign —
+  wasn't in the requested field set); the fact still shows in the left-column details
+  grid.
+- **Wired to Supabase (`reservation/actions.ts`, a Server Action):** validates
+  server-side (name/phone/date/time/guests required, email format if present — mirrors
+  the client-side `validate()`, since the client can't be trusted alone), reads the
+  current session via `supabase.auth.getUser()` for `profile_id` (null if anonymous),
+  inserts into `reservations` with `status: "new"` (see Known Issues below for why not
+  `"pending"`), returns `{ok:true} | {ok:false, error}`.
+- Submit flow has four states (`idle | loading | success | error`): loading disables
+  the button and shows a spinner, success clears the form and shows the thank-you
+  panel, error shows a dismissable-on-retry banner **without** wiping the guest's
+  typed data. The client→server call is wrapped in `try/catch` — a *thrown* exception
+  (network failure, misconfigured client) lands on the same error state instead of
+  leaving the button stuck on "Отправляем…" forever (this was an actual bug caught
+  during testing, not just a hypothetical).
+- Double-submit guarded two ways: `disabled` on the button (native, blocks the click)
+  and an `if (status === "loading") return` guard inside `handleSubmit` itself
+  (defense in depth for programmatic/Enter-key resubmits). Verified experimentally:
+  three rapid clicks on the submit button produced exactly one `POST` server-side.
+- **Issue:** Date input's *time zone* is unresolved — `reserved_at` is written as a
+  plain `YYYY-MM-DDTHH:MM:00` with no offset (interpreted in the DB session's
+  timezone), because the restaurant's real timezone doesn't exist anywhere yet
+  (Этап 2 hasn't landed a real address). Revisit together with Блок 6.4's kitchen-hours
+  timezone question once real operating data exists.
 
 ### Gallery.tsx
 - 4-column editorial grid with `col-span` / `row-span` mixed sizes; thumbnails are `motion.button` (keyboard-focusable, were bare `div`s before) with `next/image`
@@ -236,12 +275,10 @@ These patterns exist informally across components and should eventually become s
 
 Resolved by Блок 1 (see Changelog v0.1.2): Hero LCP, missing `prefers-reduced-motion`, gallery lightbox keyboard accessibility, `<img>` → `next/image`, unused `motion` import in Footer, hardcoded copyright year.
 
-### Critical (affects user experience)
-1. **Form submits to void** — Reservation form has no backend, no email service (Resend, SendGrid etc.), no error handling. (Superseded by `gastromania-spec.md` Этап 5 — form will write to Supabase `reservations`, see `gastromania-tasks.md` Блок 5.)
+Resolved by Блок 5 (see Changelog v0.1.9–v0.1.10): reservation form now writes to Supabase with server-side validation and proper loading/success/error states (was "submits to void"); the browser-native date input was replaced by a custom `Calendar` popover.
 
 ### Moderate (affects quality)
 2. **Grain texture SVG is duplicated** in Hero and Reservation — should be a single global overlay or utility class.
-4. **Date input is browser-native** — Styled inconsistently across browsers; no min-date constraint.
 
 ### Minor (polish)
 5. **CSS variables defined but not used consistently** — `--off-white`, `--warm-white`, `--dark-bronze`, `--muted`, `--border` are defined but components use raw hex values.
@@ -322,6 +359,25 @@ Resolved by Блок 1 (see Changelog v0.1.2): Hero LCP, missing `prefers-reduce
 ---
 
 ## Changelog
+
+### v0.1.10 — 2026-08-22
+- Блок 5, задача 5.1 (частично 5.3) — **бронирование пишет в Supabase**. `app/components/reservation/actions.ts` — новый Server Action `submitReservation`: серверная валидация (имя/телефон/дата/время/гости обязательны, email проверяется форматом, если указан — зеркалит клиентскую `validate()`, т.к. фронтенду не доверяем), читает текущую сессию через `supabase.auth.getUser()` для `profile_id`, вставляет в `reservations` со статусом `"new"`.
+- **Решение по статусу:** в задаче просили `pending`, но `CHECK`-ограничение в применённой миграции (`20260801000001_create_core_tables.sql`) допускает только `new|confirmed|cancelled|completed`. Показал находку, владелец подтвердил — используем `'new'` (семантически то же самое, без миграции БД).
+- `Reservation.tsx`: состояния `idle|loading|success|error` вместо одного `submitted`. Кнопка блокируется на время отправки (`disabled` + спиннер) и защищена от повторного клика двумя способами — атрибут `disabled` и ранний `return` внутри `handleSubmit`; экспериментально проверено (см. ниже) — три быстрых клика дают ровно один `POST`. При успехе форма очищается и показывается карточка «Спасибо»; при ошибке — баннер с понятным текстом, данные гостя не стираются.
+- `lib/supabase/client.ts` и `server.ts` типизированы дженериком `Database` из `types/database.ts` (был долг из v0.1.3 — «не входило в рамки 2.5»).
+- **Найден и исправлен реальный баг вне первоначального плана:** `handleSubmit` не оборачивал вызов `submitReservation` в `try/catch` — если сервер-экшен бросает исключение (а не возвращает `{ok:false}`), кнопка зависала на «Отправляем…» навсегда. Поймано при тестировании с намеренно сломанным Supabase URL, не гипотетически. Исправлено.
+- **Найдена и устранена утечка секрета, не связанная напрямую с задачей, но обнаруженная по ходу.** В `.env.local` (и, соответственно, в переменных окружения Vercel, куда они были скопированы в задаче 2.1) значения были перепутаны: `NEXT_PUBLIC_SUPABASE_URL` содержал publishable-ключ, а `NEXT_PUBLIC_SUPABASE_ANON_KEY` — похоже на **secret-ключ** (аналог `service_role` в новом формате ключей Supabase, `sb_secret_...`), опубликованный под `NEXT_PUBLIC_*` — то есть потенциально вшитый в клиентский JS-бандл продакшена. Владелец перегенерировал ключи в Supabase Dashboard до того, как я продолжил работу. Также обнаружилось, что присланный владельцем project URL содержал опечатку (переставлены два символа) — сверил с `supabase/.temp/linked-project.json` и живым HTTP-ответом, подтвердил правильный `ref` перед использованием. Переменные на Vercel (Production/Development) обновлены на корректные значения, продакшен пересобран через `vercel redeploy` (без выкладки неподтверждённой ветки) — старое значение больше не в собранном бандле. Preview-переменные по-прежнему не выставлены (CLI-квирк, тот же что в v0.1.7 — `git_branch_required` даже при указанной команде для «all Preview branches»; не блокирует эту задачу).
+- Проверено: `npm run build` и `npm run lint` чистые (тот же единственный предсуществующий warning). Полный ручной прогон через Playwright — успешная отправка (запись подтверждена косвенно: `POST / 200`, никаких ошибок в логе сервера, экран «Спасибо» появляется только при `result.ok === true`; **визуальная проверка в Supabase Table Editor остаётся на владельце** — не входит в мои возможности), невалидный email блокируется на клиенте без обращения к серверу, пустая форма — все 5 обязательных полей подсвечиваются с понятным текстом, реальный сетевой сбой (временно битый URL) корректно приводит к баннеру ошибки с сохранением введённых данных.
+- Не сделано в этой задаче (сознательно, по её рамкам): чекбокс согласия на обработку ПД и `consent_at` (задача 5.2), страница `/privacy` (задача 5.4), Telegram-уведомления, админка, доставка.
+
+### v0.1.9 — 2026-08-22
+- Полная визуальная переработка секции «Бронирование» — премиальная карточка вместо блёклых underline-полей. Новые файлы в `app/components/reservation/`: `FieldShell` (общая карточка поля — рамка/радиус/тень/hover/focus), `Calendar` (собственный попап-календарь без зависимостей, закрытые дни вт–сб исключены), `Dropdown` (универсальный listbox для времени и гостей, полная клавиатурная навигация), `PhoneField` (маска `+7 (___) ___-__-__`), `icons.tsx`, `utils.ts`.
+- Состав полей приведён к ТЗ: Имя, Телефон, Email (необязательно), Дата, Время, Гости, Комментарий (счётчик 240 символов). Убран переключатель «Винная пара» из формы (не входил в список полей ТЗ, к состоянию не был подключён — терять нечего); сам факт остался в блоке деталей слева.
+- Состояние формы типизировано под колонки таблицы `reservations` из спеки — заложено специально, чтобы v0.1.10 не пришлось переформировывать форму.
+- Кнопка отправки — 56px, hover-увеличение и тень, нажатие с пружинным сжатием (Framer Motion).
+- Найденный и исправленный на месте баг: `overflow-hidden`-подобная проблема с шевроном dropdown, наезжающим на двухстрочный плейсхолдер в узкой 3-колоночной сетке — перекомпоновано в 2 колонки (Дата+Время / Гости на всю ширину).
+- Проверено: `npm run build` и `npm run lint` чистые; вручную проверено на desktop/tablet/mobile через Playwright.
+- Ветка `feature/reservation-redesign` также включает отдельный коммит, убирающий кастомный курсор (был добавлен в `feature/creative-polish` для визуальной полировки, по отдельному запросу владельца удалён из обеих веток, чтобы не всплыл при будущем мёрдже).
 
 ### v0.1.8 — 2026-08-09
 - Точечный фикс вне очереди `gastromania-tasks.md` (по прямому запросу владельца, не Блок 4.1 — данные `dishes` остались хардкодом): `SignatureDishes.tsx` — sticky-панель с фото теперь реально работает на мобильном.

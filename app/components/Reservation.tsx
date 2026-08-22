@@ -7,7 +7,15 @@ import Dropdown from "./reservation/Dropdown";
 import Calendar from "./reservation/Calendar";
 import PhoneField from "./reservation/PhoneField";
 import { UserIcon, MailIcon, NoteIcon, ClockIcon, UsersIcon } from "./reservation/icons";
-import { GUEST_COUNTS, TIME_SLOTS, isRuPhoneComplete, pluralizeGuests } from "./reservation/utils";
+import {
+  GUEST_COUNTS,
+  TIME_SLOTS,
+  isRuPhoneComplete,
+  isValidEmail,
+  pluralizeGuests,
+  toDateOnlyISO,
+} from "./reservation/utils";
+import { submitReservation } from "./reservation/actions";
 
 const ease = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
 const springIn = [0.16, 1, 0.3, 1] as [number, number, number, number];
@@ -53,6 +61,9 @@ function validate(form: ReservationForm): FormErrors {
   if (!form.date) errors.date = "Выберите дату";
   if (!form.time) errors.time = "Выберите время";
   if (!form.partySize) errors.partySize = "Укажите количество гостей";
+  if (form.guestEmail.trim() && !isValidEmail(form.guestEmail.trim())) {
+    errors.guestEmail = "Проверьте адрес email";
+  }
   return errors;
 }
 
@@ -66,24 +77,60 @@ const fieldVariants = {
 };
 const fieldHover = { y: -3, transition: { type: "spring" as const, stiffness: 320, damping: 22 } };
 
+type SubmitStatus = "idle" | "loading" | "success" | "error";
+
 export default function Reservation() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const inView = useInView(sectionRef, { once: true, margin: "-10%" });
   const [form, setForm] = useState<ReservationForm>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<SubmitStatus>("idle");
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const setField = <K extends keyof ReservationForm>(key: K, value: ReservationForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (status === "loading") return; // already in flight — ignore repeat clicks/Enter
+
     const nextErrors = validate(form);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
-    setSubmitted(true);
+
+    setStatus("loading");
+    setServerError(null);
+
+    try {
+      const result = await submitReservation({
+        guestName: form.guestName,
+        guestPhone: form.guestPhone,
+        guestEmail: form.guestEmail,
+        partySize: form.partySize,
+        dateISO: form.date ? toDateOnlyISO(form.date) : null,
+        time: form.time,
+        comment: form.comment,
+      });
+
+      if (result.ok) {
+        setForm(emptyForm);
+        setErrors({});
+        setStatus("success");
+      } else {
+        setServerError(result.error);
+        setStatus("error");
+      }
+    } catch (err) {
+      // The server action threw instead of returning {ok:false} — e.g. a
+      // network failure or the Supabase client failing to even construct.
+      // Must still land on a visible error state, never leave the button
+      // stuck on "Отправляем…" forever.
+      console.error("submitReservation threw unexpectedly:", err);
+      setServerError("Не удалось отправить заявку. Проверьте соединение и попробуйте ещё раз.");
+      setStatus("error");
+    }
   };
 
   return (
@@ -165,7 +212,7 @@ export default function Reservation() {
               transition={{ duration: 0.8, delay: 0.25, ease }}
               className="w-full max-w-[520px] rounded-[24px] border border-[#0A0A0A]/8 bg-white shadow-[0_30px_80px_-24px_rgba(10,10,10,0.2)] p-7 sm:p-10"
             >
-              {!submitted ? (
+              {status !== "success" ? (
                 <>
                   <div className="mb-8">
                     <h3 className="heading-editorial text-[#0A0A0A] mb-2" style={{ fontSize: "1.75rem" }}>
@@ -208,7 +255,7 @@ export default function Reservation() {
                         />
                       </motion.div>
                       <motion.div variants={fieldVariants} whileHover={fieldHover}>
-                        <FieldShell label="Email (необязательно)" icon={<MailIcon />} htmlFor="res-email">
+                        <FieldShell label="Email (необязательно)" icon={<MailIcon />} htmlFor="res-email" error={errors.guestEmail}>
                           <input
                             id="res-email"
                             type="email"
@@ -280,17 +327,37 @@ export default function Reservation() {
                       </FieldShell>
                     </motion.div>
 
+                    {status === "error" && serverError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-[12px] border border-[#B3564A]/25 bg-[#B3564A]/[0.06] px-4 py-3"
+                      >
+                        <p className="text-[#B3564A] text-sm font-body" style={{ letterSpacing: "0.01em" }}>
+                          {serverError}
+                        </p>
+                      </motion.div>
+                    )}
+
                     <motion.div variants={fieldVariants}>
                       <motion.button
                         type="submit"
-                        whileHover={{ scale: 1.015, boxShadow: "0 16px 40px -10px rgba(10,10,10,0.35)" }}
-                        whileTap={{ scale: 0.98 }}
+                        disabled={status === "loading"}
+                        whileHover={status === "loading" ? undefined : { scale: 1.015, boxShadow: "0 16px 40px -10px rgba(10,10,10,0.35)" }}
+                        whileTap={status === "loading" ? undefined : { scale: 0.98 }}
                         transition={{ type: "spring", stiffness: 400, damping: 24 }}
-                        className="w-full mt-2 rounded-[14px] bg-[#0A0A0A] text-[#F5F0E8] label-refined relative overflow-hidden group"
+                        className="w-full mt-2 rounded-[14px] bg-[#0A0A0A] text-[#F5F0E8] label-refined relative overflow-hidden group disabled:opacity-60 disabled:cursor-not-allowed"
                         style={{ height: "56px" }}
                       >
-                        <span className="relative z-10">Отправить запрос</span>
-                        <span className="absolute inset-0 bg-[#8C7355] translate-y-full group-hover:translate-y-0 transition-transform duration-500" style={{ transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)" }} />
+                        <span className="relative z-10 flex items-center justify-center gap-3">
+                          {status === "loading" && (
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-[#F5F0E8]/30 border-t-[#F5F0E8] animate-spin" />
+                          )}
+                          {status === "loading" ? "Отправляем…" : "Отправить запрос"}
+                        </span>
+                        {status !== "loading" && (
+                          <span className="absolute inset-0 bg-[#8C7355] translate-y-full group-hover:translate-y-0 transition-transform duration-500" style={{ transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)" }} />
+                        )}
                       </motion.button>
                     </motion.div>
 

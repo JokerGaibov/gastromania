@@ -20,6 +20,22 @@ export function isRuPhoneComplete(formatted: string): boolean {
   return formatted.replace(/\D/g, "").length === 11;
 }
 
+// Deliberately loose (no lookahead-heavy RFC regex) — good enough to catch
+// typos without rejecting valid addresses. Real delivery is only proven by
+// actually sending mail to it, which is out of scope here.
+export function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+// Formats a Date as a plain "YYYY-MM-DD" using its *local* components —
+// avoids the UTC-shift bug `toISOString().slice(0,10)` has near midnight.
+export function toDateOnlyISO(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function pluralizeGuests(n: number): string {
   const mod10 = n % 10;
   const mod100 = n % 100;
