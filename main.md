@@ -144,6 +144,10 @@ gastronomia/
   and an `if (status === "loading") return` guard inside `handleSubmit` itself
   (defense in depth for programmatic/Enter-key resubmits). Verified experimentally:
   three rapid clicks on the submit button produced exactly one `POST` server-side.
+- Required consent checkbox (`ConsentCheckbox.tsx`) before the submit button, linking
+  to `/privacy` (new tab, so the client-only form state isn't lost). `consent_at` is
+  set to the server's own timestamp at the moment validation passes — genuinely "when
+  consent was given," not the column's `default now()`.
 - **Issue:** Date input's *time zone* is unresolved — `reserved_at` is written as a
   plain `YYYY-MM-DDTHH:MM:00` with no offset (interpreted in the DB session's
   timezone), because the restaurant's real timezone doesn't exist anywhere yet
@@ -359,6 +363,15 @@ Resolved by Блок 5 (see Changelog v0.1.9–v0.1.10): reservation form now wr
 ---
 
 ## Changelog
+
+### v0.1.11 — 2026-08-22
+- Блок 5, задачи 5.2 и 5.4 — **Блок 5 закрыт полностью**, подтверждено владельцем через Supabase Table Editor.
+- `app/components/reservation/ConsentCheckbox.tsx` (новый) — обязательный чекбокс согласия на обработку ПД, кастомный (бронзовая заливка + белая галочка), со ссылкой на `/privacy`, открывающейся в новой вкладке (форма client-only, переход по ссылке в текущей вкладке стёр бы введённые данные). Валидация на клиенте и в server action.
+- `app/privacy/page.tsx` (новый) — страница политики конфиденциальности, 10 разделов, полностью в дизайн-системе сайта. Юридические реквизиты (ИНН/ОГРН/адрес) честно помечены как «будут опубликованы после оформления юрлица», не выдуманы.
+- `actions.ts` — `consent_at` теперь пишется явным серверным `new Date().toISOString()` в момент успешной валидации, а не дефолтом колонки `now()` — раньше это было формально «время вставки строки», а не «момент согласия».
+- `Footer.tsx` — «Конфиденциальность» ведёт на `/privacy` вместо `href="#"`.
+- **Два реальных бага найдены и исправлены при разработке:** (1) галочка в чекбоксе не появлялась визуально — `peer-checked:opacity-100` был на SVG, вложенном на уровень глубже, чем позволяет Tailwind `peer` (матчит только прямых соседей); переведено на управление через React `checked`-проп напрямую. (2) На мобильном слово «конфиденциальности» в H1 обрезалось за края экрана — добавлен `break-words`.
+- Проверено: `npm run build`/`lint` чистые; Playwright — блокировка отправки без согласия, клик по ссылке политики не переключает чекбокс, успешная отправка передаёт `consentGiven: true` в лог сервера без ошибок, мобильная версия `/privacy` без горизонтальной обрезки.
 
 ### v0.1.10 — 2026-08-22
 - Блок 5, задача 5.1 (частично 5.3) — **бронирование пишет в Supabase**. `app/components/reservation/actions.ts` — новый Server Action `submitReservation`: серверная валидация (имя/телефон/дата/время/гости обязательны, email проверяется форматом, если указан — зеркалит клиентскую `validate()`, т.к. фронтенду не доверяем), читает текущую сессию через `supabase.auth.getUser()` для `profile_id`, вставляет в `reservations` со статусом `"new"`.
