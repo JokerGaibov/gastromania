@@ -10,6 +10,7 @@ import LogoutButton from "./LogoutButton";
 const NAV_ITEMS = [
   { href: "/admin", label: "Обзор" },
   { href: "/admin/reservations", label: "Брони" },
+  { href: "/admin/menu", label: "Меню" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {

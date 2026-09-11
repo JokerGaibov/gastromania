@@ -17,7 +17,7 @@ export default function FieldShell({
   children,
 }: {
   label: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   htmlFor?: string;
   error?: string;
   children: ReactNode;
@@ -35,7 +35,7 @@ export default function FieldShell({
           htmlFor={htmlFor}
           className="flex items-center gap-2 mb-1 text-[#8C7355]"
         >
-          <span className="w-3.5 h-3.5 shrink-0 [&>svg]:w-full [&>svg]:h-full">{icon}</span>
+          {icon && <span className="w-3.5 h-3.5 shrink-0 [&>svg]:w-full [&>svg]:h-full">{icon}</span>}
           <span className="label-refined" style={{ fontSize: "0.625rem" }}>
             {label}
           </span>
