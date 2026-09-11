@@ -168,6 +168,7 @@ export type Database = {
           created_at: string
           delivery_address: string
           delivery_fee: number
+          guest_email: string | null
           guest_name: string
           guest_phone: string
           id: string
@@ -185,6 +186,7 @@ export type Database = {
           created_at?: string
           delivery_address: string
           delivery_fee?: number
+          guest_email?: string | null
           guest_name: string
           guest_phone: string
           id?: string
@@ -202,6 +204,7 @@ export type Database = {
           created_at?: string
           delivery_address?: string
           delivery_fee?: number
+          guest_email?: string | null
           guest_name?: string
           guest_phone?: string
           id?: string
@@ -341,6 +344,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_order: {
+        Args: {
+          p_items: Json
+          p_guest_name: string
+          p_guest_phone: string
+          p_guest_email: string | null
+          p_delivery_address: string
+          p_comment?: string | null
+        }
+        Returns: string
+      }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {

@@ -101,6 +101,24 @@ export function PlusIcon({ className }: IconProps) {
   );
 }
 
+export function MinusIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
+
+export function CartIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <circle cx="9" cy="20" r="1.3" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="20" r="1.3" fill="currentColor" stroke="none" />
+      <path d="M3 4h2l2.2 11.1a1.8 1.8 0 0 0 1.8 1.4h8.6a1.8 1.8 0 0 0 1.77-1.47L21 8H6" />
+    </svg>
+  );
+}
+
 export function PencilIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...base}>

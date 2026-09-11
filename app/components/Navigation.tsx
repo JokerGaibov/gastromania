@@ -1,19 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { smoothScrollTo } from "@/lib/motion";
 import MagneticButton from "./MagneticButton";
 
+// Mix of in-page scroll anchors ("#...") and a real route ("/delivery") —
+// handleLinkClick below branches on which kind each one is.
 const navLinks = [
   { label: "История", href: "#story" },
   { label: "Шеф", href: "#chef" },
   { label: "Меню", href: "#dishes" },
+  { label: "Доставка", href: "/delivery" },
   { label: "Галерея", href: "#gallery" },
   { label: "Контакты", href: "#contact" },
 ];
 
 export default function Navigation() {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState<string>("");
@@ -25,7 +30,11 @@ export default function Navigation() {
   }, []);
 
   useEffect(() => {
+    // Only "#..." entries are scroll anchors — document.querySelector()
+    // throws on a non-CSS-selector string like "/delivery", so real routes
+    // must be filtered out before this runs.
     const sections = navLinks
+      .filter((link) => link.href.startsWith("#"))
       .map((link) => document.querySelector<HTMLElement>(link.href))
       .filter((el): el is HTMLElement => !!el);
     if (!sections.length) return;
@@ -45,7 +54,11 @@ export default function Navigation() {
 
   const handleLinkClick = (href: string) => {
     setMenuOpen(false);
-    smoothScrollTo(href);
+    if (href.startsWith("#")) {
+      smoothScrollTo(href);
+    } else {
+      router.push(href);
+    }
   };
 
   return (

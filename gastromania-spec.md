@@ -110,6 +110,7 @@ create table public.orders (
   profile_id uuid references public.profiles(id) on delete set null,
   guest_name text not null,
   guest_phone text not null,
+  guest_email text,                          -- добавлено 2026-09-11, checkout запрашивает
   delivery_address text not null,
   total_amount numeric(10,2) not null,       -- items + delivery_fee, считает сервер
   delivery_fee numeric(10,2) not null default 0,  -- снэпшот на момент оформления, не живая ссылка на delivery_settings
@@ -219,8 +220,12 @@ create policy "reservations_select_own_or_admin" on public.reservations
 create policy "reservations_admin_manage" on public.reservations
   for update using (public.is_admin());
 
-create policy "orders_insert_any" on public.orders
-  for insert with check (true);
+-- Обновлено 2026-09-11 (задача 6.5 закрыта, см. main.md v0.1.18): прямого
+-- insert с клиента в orders/order_items больше нет вообще. Единственный
+-- путь создания заказа — public.create_order() (security definer,
+-- 20260911240000), которая сама читает menu_items/delivery_settings и
+-- сама считает суммы; ни цена, ни total клиентом не передаются, потому
+-- что параметров для этого у функции просто нет.
 create policy "orders_select_own_or_admin" on public.orders
   for select using (profile_id = auth.uid() or public.is_admin());
 create policy "orders_admin_manage" on public.orders
@@ -228,14 +233,6 @@ create policy "orders_admin_manage" on public.orders
 
 alter table public.order_items enable row level security;
 
--- ВАЖНО, ещё не решено (см. gastromania-tasks.md, задача 6.5): insert
--- открыт всем тем же принципом, что и orders_insert_any/
--- reservations_insert_any — гость оформляет заказ без регистрации. Но это
--- не защищает от вставки произвольной цены в обход сервера — до реального
--- запуска checkout решить между security-definer RPC (единственный путь
--- записи, сам считает цены) и другим механизмом.
-create policy "order_items_insert_any" on public.order_items
-  for insert with check (true);
 create policy "order_items_select_own_or_admin" on public.order_items
   for select using (
     exists (

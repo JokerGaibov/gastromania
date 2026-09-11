@@ -15,6 +15,7 @@ import LogoutButton from "./LogoutButton";
 const NAV_ITEMS = [
   { href: "/admin", label: "Обзор" },
   { href: "/admin/reservations", label: "Брони" },
+  { href: "/admin/orders", label: "Заказы" },
   { href: "/admin/menu", label: "Меню" },
   { href: "/admin/promotions", label: "Акции" },
   { href: "/admin/delivery", label: "Доставка" },

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Cormorant_Garamond, Inter } from "next/font/google";
 import MotionProvider from "./components/MotionProvider";
 import ScrollProgress from "./components/ScrollProgress";
+import { CartProvider } from "@/lib/cart/CartContext";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -52,7 +53,7 @@ export default function RootLayout({
       <body className="min-h-full antialiased">
         <MotionProvider>
           <ScrollProgress />
-          {children}
+          <CartProvider>{children}</CartProvider>
         </MotionProvider>
       </body>
     </html>
