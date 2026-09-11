@@ -11,9 +11,24 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Обзор" },
   { href: "/admin/reservations", label: "Брони" },
   { href: "/admin/menu", label: "Меню" },
+  { href: "/admin/promotions", label: "Акции" },
+  { href: "/admin/delivery", label: "Доставка" },
+  // Матчит требование Блока 7.7: manager не должен иметь доступ к
+  // /admin/users, поэтому пункт скрыт для всех, кроме role === 'admin'.
+  // Сама страница защищена ещё раз на сервере (app/admin/users/page.tsx) —
+  // это только про то, чтобы не показывать ссылку в тупик.
+  { href: "/admin/users", label: "Пользователи", adminOnly: true },
 ];
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default function AdminShell({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role?: string | null;
+}) {
+  const items = NAV_ITEMS.filter((item) => !item.adminOnly || role === "admin");
+
   return (
     <div className="bg-[#F5F0E8] min-h-screen">
       <header className="border-b border-[#0A0A0A]/8 bg-white">
@@ -26,7 +41,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               Gastromania
             </span>
             <nav className="flex items-center gap-6 shrink-0">
-              {NAV_ITEMS.map((item) => (
+              {items.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

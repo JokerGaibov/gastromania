@@ -1,66 +1,136 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { canAccessAdminPanel } from "@/lib/auth/roles";
-import LogoutButton from "./LogoutButton";
+import { canAccessAdminPanel, roleLabel } from "@/lib/auth/roles";
 
 export const metadata: Metadata = {
   title: "Админ-панель — Gastromania",
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Администратор",
-  manager: "Менеджер",
-  waiter: "Официант",
-  courier: "Курьер",
-  customer: "Гость",
-};
+const QUICK_LINKS = [
+  { href: "/admin/reservations", label: "Брони" },
+  { href: "/admin/menu", label: "Меню" },
+  { href: "/admin/promotions", label: "Акции" },
+  { href: "/admin/delivery", label: "Доставка" },
+  { href: "/admin/users", label: "Пользователи", adminOnly: true },
+];
 
-// Overview screen — counts (Блок 7.6) still pending, this just shows who's
-// signed in. Re-checks auth itself rather than trusting the layout blindly —
-// see the "Auth checks in page components" guidance in
-// node_modules/next/dist/docs/01-app/02-guides/authentication.md: layouts
-// don't re-run on every client-side navigation, so each page under a
-// protected layout should still verify its own data access once more
-// /admin/* pages exist beyond this one.
+function StatTile({ label, value, href, accent }: { label: string; value: string; href?: string; accent?: "warn" }) {
+  const content = (
+    <div className="rounded-[18px] border border-[#0A0A0A]/8 bg-white p-5 sm:p-6 h-full">
+      <p className="label-refined text-[#0A0A0A]/40 mb-3">{label}</p>
+      <p
+        className="heading-editorial"
+        style={{ fontSize: "2.25rem", color: accent === "warn" ? "#B3564A" : "#0A0A0A" }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+
+  if (!href) return content;
+
+  return (
+    <Link href={href} className="block hover:opacity-80 transition-opacity duration-300">
+      {content}
+    </Link>
+  );
+}
+
+// Real counts from Supabase, not sample/demo data — per the owner's
+// request this dashboard deliberately stops at operational counts, no
+// charts or trend analytics.
 export default async function AdminHomePage() {
   const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user) redirect("/login?next=/admin");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("id", user.id)
-    .single();
-
+  const { data: profile } = await supabase.from("profiles").select("full_name, role").eq("id", user.id).single();
   if (!canAccessAdminPanel(profile?.role)) redirect("/admin");
 
-  const roleLabel = (profile?.role && ROLE_LABELS[profile.role]) || profile?.role || "—";
+  // Same "no explicit restaurant timezone yet" caveat as the reservations
+  // list/filter (app/admin/reservations/page.tsx) and Блок 6.4 in
+  // gastromania-tasks.md — today's bounds are the server's own wall clock.
+  const now = new Date();
+  const todayStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T00:00:00`;
+  const todayEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T23:59:59.999`;
+  const nowIso = now.toISOString();
+
+  const [
+    newReservations,
+    todayReservations,
+    activeMenuItems,
+    stopListedMenuItems,
+    activePromotions,
+    deliverySettings,
+  ] = await Promise.all([
+    supabase.from("reservations").select("id", { count: "exact", head: true }).eq("status", "new"),
+    supabase
+      .from("reservations")
+      .select("id", { count: "exact", head: true })
+      .gte("reserved_at", todayStart)
+      .lt("reserved_at", todayEnd),
+    supabase.from("menu_items").select("id", { count: "exact", head: true }).eq("is_active", true),
+    supabase.from("menu_items").select("id", { count: "exact", head: true }).eq("is_active", false),
+    supabase
+      .from("promotions")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true)
+      .or(`starts_at.is.null,starts_at.lte.${nowIso}`)
+      .or(`ends_at.is.null,ends_at.gte.${nowIso}`),
+    supabase.from("delivery_settings").select("is_delivery_enabled").eq("id", 1).single(),
+  ]);
+
+  const links = QUICK_LINKS.filter((item) => !item.adminOnly || profile?.role === "admin");
 
   return (
-    <div className="max-w-[440px] rounded-[24px] border border-[#0A0A0A]/8 bg-white shadow-[0_4px_16px_-8px_rgba(10,10,10,0.08)] p-10">
-      <span className="label-refined text-[#8C7355] block mb-4">Панель персонала</span>
-      <h1 className="heading-editorial text-[#0A0A0A] mb-8" style={{ fontSize: "1.75rem" }}>
-        {profile?.full_name?.trim() || "Без имени"}
-      </h1>
+    <div>
+      <div className="mb-10">
+        <span className="label-refined text-[#8C7355] block mb-2">
+          Здравствуйте, {profile?.full_name?.trim() || "коллега"} · {roleLabel(profile?.role ?? "")}
+        </span>
+        <h1 className="heading-editorial text-[#0A0A0A]" style={{ fontSize: "clamp(1.75rem,3vw,2.25rem)" }}>
+          Обзор
+        </h1>
+      </div>
 
-      <dl className="flex flex-col gap-5 mb-10">
-        <div>
-          <dt className="label-refined text-[#0A0A0A]/35 mb-1">Email</dt>
-          <dd className="text-[#0A0A0A]/80 text-[0.9375rem] font-body">{user.email}</dd>
-        </div>
-        <div>
-          <dt className="label-refined text-[#0A0A0A]/35 mb-1">Роль</dt>
-          <dd className="text-[#0A0A0A]/80 text-[0.9375rem] font-body">{roleLabel}</dd>
-        </div>
-      </dl>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+        <StatTile label="Новые брони" value={String(newReservations.count ?? 0)} href="/admin/reservations" />
+        <StatTile label="Брони на сегодня" value={String(todayReservations.count ?? 0)} href="/admin/reservations" />
+        <StatTile label="Активные позиции меню" value={String(activeMenuItems.count ?? 0)} href="/admin/menu" />
+        <StatTile
+          label="В стоп-листе"
+          value={String(stopListedMenuItems.count ?? 0)}
+          href="/admin/menu"
+          accent={stopListedMenuItems.count ? "warn" : undefined}
+        />
+        <StatTile label="Активные акции" value={String(activePromotions.count ?? 0)} href="/admin/promotions" />
+        <StatTile
+          label="Доставка"
+          value={deliverySettings.data?.is_delivery_enabled ? "Включена" : "Выключена"}
+          href="/admin/delivery"
+          accent={deliverySettings.data?.is_delivery_enabled === false ? "warn" : undefined}
+        />
+      </div>
 
-      <LogoutButton />
+      <div>
+        <p className="label-refined text-[#0A0A0A]/40 mb-4">Быстрые переходы</p>
+        <div className="flex flex-wrap gap-3">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex items-center h-11 px-5 rounded-[12px] border border-[#0A0A0A]/10 bg-white label-refined text-[#0A0A0A]/70 hover:border-[#8C7355] hover:text-[#0A0A0A] transition-colors duration-300"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
