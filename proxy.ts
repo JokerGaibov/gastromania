@@ -17,8 +17,16 @@ import { createServerClient } from "@supabase/ssr";
 //
 // Renamed from `middleware.ts` to `proxy.ts` in Next.js 16 — see
 // node_modules/next/dist/docs/01-app/01-getting-started/16-proxy.md.
+//
+// Also forwards the requested path as `x-pathname` — Server Component
+// layouts (app/admin/layout.tsx) have no other way to know which nested
+// page triggered them, and need it to send an unauthenticated visitor to
+// `/login?next=<the page they actually wanted>` instead of always `/admin`.
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,7 +38,7 @@ export async function proxy(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );

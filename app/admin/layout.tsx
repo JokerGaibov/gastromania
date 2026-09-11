@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessAdminPanel } from "@/lib/auth/roles";
 import LogoutButton from "./LogoutButton";
+import AdminShell from "./AdminShell";
 
 // Real protection lives here (and in RLS) — the guard is a server-side read
 // on every request to a page under this layout, not a client-side check
@@ -16,7 +18,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login?next=/admin");
+    // x-pathname comes from proxy.ts — falls back to /admin if it's ever
+    // missing (e.g. a future request path proxy.ts's matcher excludes).
+    const pathname = (await headers()).get("x-pathname") ?? "/admin";
+    redirect(`/login?next=${pathname}`);
   }
 
   // profiles_select_own_or_admin RLS policy lets any signed-in user read
@@ -53,5 +58,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
-  return <>{children}</>;
+  return <AdminShell>{children}</AdminShell>;
 }

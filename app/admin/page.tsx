@@ -16,9 +16,8 @@ const ROLE_LABELS: Record<string, string> = {
   customer: "Гость",
 };
 
-// Placeholder screen for Блок 3 — the real dashboard (counts, orders,
-// reservations) is Блок 7. This just proves the guard + role read work end
-// to end. Re-checks auth itself rather than trusting the layout blindly —
+// Overview screen — counts (Блок 7.6) still pending, this just shows who's
+// signed in. Re-checks auth itself rather than trusting the layout blindly —
 // see the "Auth checks in page components" guidance in
 // node_modules/next/dist/docs/01-app/02-guides/authentication.md: layouts
 // don't re-run on every client-side navigation, so each page under a
@@ -44,26 +43,24 @@ export default async function AdminHomePage() {
   const roleLabel = (profile?.role && ROLE_LABELS[profile.role]) || profile?.role || "—";
 
   return (
-    <main className="bg-[#F5F0E8] min-h-screen flex items-center justify-center px-8">
-      <div className="w-full max-w-[440px] rounded-[24px] border border-[#0A0A0A]/8 bg-white shadow-[0_30px_80px_-24px_rgba(10,10,10,0.2)] p-10">
-        <span className="label-refined text-[#8C7355] block mb-4">Панель персонала</span>
-        <h1 className="heading-editorial text-[#0A0A0A] mb-8" style={{ fontSize: "1.75rem" }}>
-          {profile?.full_name?.trim() || "Без имени"}
-        </h1>
+    <div className="max-w-[440px] rounded-[24px] border border-[#0A0A0A]/8 bg-white shadow-[0_4px_16px_-8px_rgba(10,10,10,0.08)] p-10">
+      <span className="label-refined text-[#8C7355] block mb-4">Панель персонала</span>
+      <h1 className="heading-editorial text-[#0A0A0A] mb-8" style={{ fontSize: "1.75rem" }}>
+        {profile?.full_name?.trim() || "Без имени"}
+      </h1>
 
-        <dl className="flex flex-col gap-5 mb-10">
-          <div>
-            <dt className="label-refined text-[#0A0A0A]/35 mb-1">Email</dt>
-            <dd className="text-[#0A0A0A]/80 text-[0.9375rem] font-body">{user.email}</dd>
-          </div>
-          <div>
-            <dt className="label-refined text-[#0A0A0A]/35 mb-1">Роль</dt>
-            <dd className="text-[#0A0A0A]/80 text-[0.9375rem] font-body">{roleLabel}</dd>
-          </div>
-        </dl>
+      <dl className="flex flex-col gap-5 mb-10">
+        <div>
+          <dt className="label-refined text-[#0A0A0A]/35 mb-1">Email</dt>
+          <dd className="text-[#0A0A0A]/80 text-[0.9375rem] font-body">{user.email}</dd>
+        </div>
+        <div>
+          <dt className="label-refined text-[#0A0A0A]/35 mb-1">Роль</dt>
+          <dd className="text-[#0A0A0A]/80 text-[0.9375rem] font-body">{roleLabel}</dd>
+        </div>
+      </dl>
 
-        <LogoutButton />
-      </div>
-    </main>
+      <LogoutButton />
+    </div>
   );
 }
