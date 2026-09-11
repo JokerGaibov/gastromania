@@ -15,7 +15,9 @@ export type SubmitOrderInput = {
   consentGiven: boolean;
 };
 
-export type SubmitOrderResult = { ok: true; orderId: string } | { ok: false; error: string };
+export type SubmitOrderResult =
+  | { ok: true; orderId: string; orderNumber: number }
+  | { ok: false; error: string };
 
 // Mirrors the client-side checks in CheckoutForm.tsx, same "не доверяем
 // клиенту" principle as reservation/actions.ts — but the real backstop for
@@ -62,5 +64,10 @@ export async function submitOrder(input: SubmitOrderInput): Promise<SubmitOrderR
     };
   }
 
-  return { ok: true, orderId: data as string };
+  // create_order() returns jsonb: {"order_id": "...", "order_number": 1001}
+  // (20260911250000) — order_id is the internal UUID (never shown to the
+  // customer, see app/checkout/CheckoutForm.tsx), order_number is the
+  // human-readable one shown everywhere in the UI.
+  const result = data as { order_id: string; order_number: number };
+  return { ok: true, orderId: result.order_id, orderNumber: result.order_number };
 }

@@ -106,7 +106,8 @@ create table public.reservations (
 -- заказа — отдельная таблица order_items со снэпшотом цены/названия на
 -- момент заказа (менять их задним числом через menu_items нельзя).
 create table public.orders (
-  id uuid primary key default gen_random_uuid(),
+  id uuid primary key default gen_random_uuid(),  -- внутренний технический id, FK строятся через него
+  order_number integer not null unique default nextval('orders_order_number_seq'),  -- человекочитаемый #1001, #1002... для UI/Telegram/провайдера
   profile_id uuid references public.profiles(id) on delete set null,
   guest_name text not null,
   guest_phone text not null,

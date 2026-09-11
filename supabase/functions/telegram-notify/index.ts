@@ -117,10 +117,12 @@ async function formatOrder(record: Record<string, unknown>): Promise<string> {
   const deliveryFee = Number(record.delivery_fee ?? 0);
   const total = Number(record.total_amount ?? 0);
 
+  // order_number (human-readable, #1001-style — see 20260911250000), not
+  // the internal orders.id UUID used above only to fetch order_items.
   const lines = [
     "🛵 <b>Оплаченный заказ на доставку</b>",
     "",
-    `№ ${escapeHtml(record.id)}`,
+    `№ ${escapeHtml(record.order_number)}`,
     `👤 ${escapeHtml(record.guest_name)}`,
     `📞 ${escapeHtml(record.guest_phone)}`,
     `📍 ${escapeHtml(record.delivery_address)}`,

@@ -172,6 +172,7 @@ export type Database = {
           guest_name: string
           guest_phone: string
           id: string
+          order_number: number
           order_status: string
           paid_at: string | null
           payment_method: string
@@ -190,6 +191,7 @@ export type Database = {
           guest_name: string
           guest_phone: string
           id?: string
+          order_number?: number
           order_status?: string
           paid_at?: string | null
           payment_method?: string
@@ -208,6 +210,7 @@ export type Database = {
           guest_name?: string
           guest_phone?: string
           id?: string
+          order_number?: number
           order_status?: string
           paid_at?: string | null
           payment_method?: string
@@ -353,7 +356,7 @@ export type Database = {
           p_delivery_address: string
           p_comment?: string | null
         }
-        Returns: string
+        Returns: Json
       }
       is_admin: { Args: never; Returns: boolean }
     }

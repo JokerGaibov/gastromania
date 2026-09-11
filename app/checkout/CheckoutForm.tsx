@@ -50,7 +50,9 @@ export default function CheckoutForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [serverError, setServerError] = useState<string | null>(null);
-  const [orderId, setOrderId] = useState<string | null>(null);
+  // Only the human-readable order_number is shown to the customer —
+  // orders.id (UUID) stays an internal identifier, never surfaced here.
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
 
   // Display only — the actual total is computed server-side in
   // create_order() from live menu_items/delivery_settings. This preview
@@ -105,7 +107,7 @@ export default function CheckoutForm({
         return;
       }
 
-      setOrderId(result.orderId);
+      setOrderNumber(result.orderNumber);
       cart.clear();
       setStatus("success");
     } catch (err) {
@@ -115,7 +117,7 @@ export default function CheckoutForm({
     }
   }
 
-  if (status === "success" && orderId) {
+  if (status === "success" && orderNumber !== null) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -128,7 +130,7 @@ export default function CheckoutForm({
           Заказ создан
         </h2>
         <p className="text-[#0A0A0A]/50 text-sm font-body mb-2">Номер заказа</p>
-        <p className="text-[#8C7355] font-body text-lg mb-8">{orderId}</p>
+        <p className="text-[#8C7355] font-body text-2xl mb-8">#{orderNumber}</p>
         <div className="rounded-[14px] bg-[#F5F0E8] px-5 py-4 mb-8 text-left">
           <p className="text-[#0A0A0A]/70 text-sm font-body leading-relaxed">
             Для завершения оформления требуется онлайн-оплата. Мы свяжемся с вами, как только оплата будет

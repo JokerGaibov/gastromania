@@ -57,7 +57,7 @@ export default async function AdminOrdersPage({
   let query = supabase
     .from("orders")
     .select(
-      "id, created_at, guest_name, guest_phone, guest_email, delivery_address, comment, total_amount, delivery_fee, order_status, payment_status, paid_at, order_items(id, name, unit_price, quantity, subtotal)"
+      "id, order_number, created_at, guest_name, guest_phone, guest_email, delivery_address, comment, total_amount, delivery_fee, order_status, payment_status, paid_at, order_items(id, name, unit_price, quantity, subtotal)"
     )
     .order("created_at", { ascending: false });
 
@@ -119,7 +119,7 @@ export default async function AdminOrdersPage({
               <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                 <div>
                   <p className="text-[#0A0A0A] font-body font-medium text-[0.9375rem] mb-1">
-                    {order.guest_name} · № {order.id.slice(0, 8)}
+                    {order.guest_name} · #{order.order_number}
                   </p>
                   <p className="text-[#0A0A0A]/45 text-xs font-body">{formatDateTime(order.created_at)}</p>
                   {isPaid && order.paid_at && (

@@ -43,7 +43,7 @@ export default async function AccountOrdersPage() {
   const { data: orders, error } = await supabase
     .from("orders")
     .select(
-      "id, created_at, order_status, payment_status, total_amount, delivery_fee, order_items(id, name, unit_price, quantity, subtotal)"
+      "id, order_number, created_at, order_status, payment_status, total_amount, delivery_fee, order_items(id, name, unit_price, quantity, subtotal)"
     )
     .order("created_at", { ascending: false });
 
@@ -98,7 +98,7 @@ export default async function AccountOrdersPage() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                 <div>
-                  <p className="text-[#0A0A0A]/40 text-xs font-body">Заказ № {order.id.slice(0, 8)}</p>
+                  <p className="text-[#0A0A0A]/40 text-xs font-body">Заказ #{order.order_number}</p>
                   <p className="text-[#0A0A0A]/40 text-xs font-body">{formatDateTime(order.created_at)}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
