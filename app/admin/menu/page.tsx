@@ -24,9 +24,10 @@ export default async function AdminMenuPage() {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
   if (!canAccessAdminPanel(profile?.role)) redirect("/admin");
 
-  // menu_public_read now allows is_staff() to see inactive rows too (see
-  // 20260911160000) — without that, staff couldn't find 86'd items to take
-  // them back off the stop-list.
+  // menu_public_read allows admin to see inactive rows too (originally via
+  // is_staff() in 20260911160000, now is_admin() — see 20260911220000)
+  // — without that, staff couldn't find 86'd items to take them back off
+  // the stop-list.
   const { data: items, error } = await supabase
     .from("menu_items")
     .select("id, name, description, price, category, image_url, is_active, sort_order")

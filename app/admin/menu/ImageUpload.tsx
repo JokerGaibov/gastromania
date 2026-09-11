@@ -7,9 +7,10 @@ import { ImageIcon } from "../../components/reservation/icons";
 
 // Uploads straight from the browser to Supabase Storage using the signed-in
 // user's own session — no server action file relay needed. Protected by the
-// menu_images_staff_write RLS policy on storage.objects (20260911160000
-// migration): only 'admin'/'manager' can write to the "menu-images" bucket,
-// enforced by Supabase itself, not by anything client-side.
+// menu_images_staff_write RLS policy on storage.objects (originally
+// 20260911160000, redefined onto is_admin() in 20260911220000): only
+// 'admin' can write to the "menu-images" bucket, enforced by Supabase
+// itself, not by anything client-side.
 export default function ImageUpload({
   value,
   onChange,

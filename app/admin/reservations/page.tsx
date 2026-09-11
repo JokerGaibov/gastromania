@@ -20,8 +20,9 @@ export default async function AdminReservationsPage({
   // Re-checked here too, same reasoning as app/admin/page.tsx: layouts
   // don't re-run on every client-side navigation between sibling pages, so
   // each page under app/admin/layout.tsx verifies itself rather than
-  // trusting that render. RLS (is_staff()) is still the real backstop for
-  // the data fetch below regardless of this check.
+  // trusting that render. RLS (is_admin() — was is_staff() before
+  // 20260911220000) is still the real backstop for the data fetch below
+  // regardless of this check.
   const {
     data: { user },
   } = await supabase.auth.getUser();

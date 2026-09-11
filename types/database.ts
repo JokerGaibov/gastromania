@@ -113,44 +113,104 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          menu_item_id: string | null
+          name: string
+          order_id: string
+          quantity: number
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_item_id?: string | null
+          name: string
+          order_id: string
+          quantity: number
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_item_id?: string | null
+          name?: string
+          order_id?: string
+          quantity?: number
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
+          comment: string | null
           consent_at: string
           created_at: string
           delivery_address: string
+          delivery_fee: number
           guest_name: string
           guest_phone: string
           id: string
-          items: Json
+          order_status: string
+          paid_at: string | null
           payment_method: string
+          payment_status: string
           profile_id: string | null
-          status: string
+          provider_payment_id: string | null
           total_amount: number
         }
         Insert: {
+          comment?: string | null
           consent_at?: string
           created_at?: string
           delivery_address: string
+          delivery_fee?: number
           guest_name: string
           guest_phone: string
           id?: string
-          items: Json
+          order_status?: string
+          paid_at?: string | null
           payment_method?: string
+          payment_status?: string
           profile_id?: string | null
-          status?: string
+          provider_payment_id?: string | null
           total_amount: number
         }
         Update: {
+          comment?: string | null
           consent_at?: string
           created_at?: string
           delivery_address?: string
+          delivery_fee?: number
           guest_name?: string
           guest_phone?: string
           id?: string
-          items?: Json
+          order_status?: string
+          paid_at?: string | null
           payment_method?: string
+          payment_status?: string
           profile_id?: string | null
-          status?: string
+          provider_payment_id?: string | null
           total_amount?: number
         }
         Relationships: [

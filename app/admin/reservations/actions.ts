@@ -30,9 +30,10 @@ export async function updateReservationStatus(
     .eq("id", user.id)
     .single();
 
-  // Belt-and-suspenders: RLS (reservations_admin_manage → is_staff(), see
-  // the 20260911140000 migration) is the real backstop, this just turns a
-  // raw Postgres denial into a clean message in the UI.
+  // Belt-and-suspenders: RLS (reservations_admin_manage → is_admin(),
+  // originally is_staff() in 20260911140000, redefined in 20260911220000)
+  // is the real backstop, this just turns a raw Postgres denial into a
+  // clean message in the UI.
   if (!canAccessAdminPanel(profile?.role)) {
     return { ok: false, error: "Недостаточно прав." };
   }

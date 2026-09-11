@@ -1,18 +1,39 @@
 // Supabase Edge Function — sends a Telegram message to the staff chat when a
-// new row lands in `reservations` (and, later, `orders` — see formatOrder
-// below). Triggered by a Supabase Database Webhook (Database → Webhooks in
-// the dashboard, or an equivalent `supabase_functions.http_request` trigger
-// in a migration), not called directly by the website.
+// new row lands in `reservations`, or when an order's payment is confirmed
+// (see formatOrder below). Triggered by a Supabase Database Webhook
+// (Database → Webhooks in the dashboard, or an equivalent
+// `supabase_functions.http_request`/pg_net trigger in a migration — see
+// the 20260822090000 migration for why pg_net, not
+// `supabase_functions.http_request`, is what actually works on this
+// project), not called directly by the website.
 //
-// Scalable-by-design: a Database Webhook payload always carries `table` and
-// `record`, so adding Telegram notifications for a new table later (orders,
-// once Блок 6 delivery ships) means adding one more webhook pointed at this
-// same function — not writing a second function. See formatOrder for the
-// shape that's already prepared (untested until real orders exist).
+// Orders notify on UPDATE, not INSERT — see formatMessage: a new order
+// isn't real until it's paid (customer could abandon checkout, or payment
+// could fail), so this only fires exactly at the payment_status
+// pending→paid transition, per gastromania-spec.md Этап 5 / the owner's
+// explicit "Telegram должен отправляться ТОЛЬКО после подтверждённой
+// online payment". That transition can only happen via the payment
+// webhook, never a normal client update — see the
+// orders_guard_payment_status trigger, 20260911230000 migration — so by
+// the time this function runs the order is genuinely paid.
+//
+// Not wired to any trigger yet (Блок 6 hasn't shipped, orders_items has no
+// real data) — this file is prepared ahead of time so wiring it up later
+// is "add one migration", not "rewrite this function".
 //
 // Required secrets (set via `supabase secrets set`, never committed):
 //   TELEGRAM_BOT_TOKEN — from @BotFather
 //   TELEGRAM_CHAT_ID   — the staff group's chat id
+// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are NOT something to set
+// manually — every Supabase Edge Function gets them injected automatically
+// at runtime. Using them here (to read order_items, a related table the
+// Database Webhook payload itself doesn't include) is safe specifically
+// because this is a trusted server-side Edge Function environment with its
+// own secrets, never reachable from the browser — categorically different
+// from the Next.js app, where service_role must never appear (see
+// gastromania-tasks.md rule 8 and main.md v0.1.10's incident).
+
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 type WebhookPayload = {
   type: "INSERT" | "UPDATE" | "DELETE";
@@ -38,6 +59,11 @@ function formatDateTime(iso: unknown): string {
   }).format(date);
 }
 
+function formatMoney(value: unknown): string {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(2) : String(value ?? "—");
+}
+
 function formatReservation(record: Record<string, unknown>): string {
   const lines = [
     "🆕 <b>Новая бронь</b>",
@@ -52,41 +78,81 @@ function formatReservation(record: Record<string, unknown>): string {
   return lines.join("\n");
 }
 
-// Prepared for Блок 6 (Доставка и заказы) — not exercised by any real data
-// yet, since the delivery order flow isn't built. `items` mirrors the shape
-// documented in gastromania-spec.md: [{menu_item_id, name, price, qty}].
-function formatOrder(record: Record<string, unknown>): string {
-  const items = Array.isArray(record.items) ? record.items : [];
-  const itemLines = items.map((item) => {
-    const i = item as Record<string, unknown>;
-    return `  • ${escapeHtml(i.name)} × ${escapeHtml(i.qty)}`;
-  });
+type OrderItemRow = { name: string; quantity: number; subtotal: number };
+
+// order_items lives in its own table (20260911230000) — a Database Webhook
+// payload only ever carries the `orders` row itself, never joined child
+// rows, so the line items need their own round-trip query.
+async function fetchOrderItems(orderId: string): Promise<OrderItemRow[]> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error("telegram-notify: SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY not available");
+    return [];
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const { data, error } = await supabase
+    .from("order_items")
+    .select("name, quantity, subtotal")
+    .eq("order_id", orderId);
+
+  if (error) {
+    console.error("telegram-notify: failed to fetch order_items", error);
+    return [];
+  }
+  return (data ?? []) as OrderItemRow[];
+}
+
+// Prepared for Блок 6 — not exercised by any real data yet. Fields match
+// the orders schema from the 20260911230000 migration: order_status and
+// payment_status are separate columns (not conflated), delivery_fee is a
+// checkout-time snapshot, comment mirrors the same field on reservations.
+async function formatOrder(record: Record<string, unknown>): Promise<string> {
+  const items = await fetchOrderItems(String(record.id));
+  const itemLines = items.map(
+    (item) => `  • ${escapeHtml(item.name)} × ${escapeHtml(item.quantity)} — ${formatMoney(item.subtotal)} ₽`
+  );
+
+  const deliveryFee = Number(record.delivery_fee ?? 0);
+  const total = Number(record.total_amount ?? 0);
 
   const lines = [
-    "🛵 <b>Новый заказ на доставку</b>",
+    "🛵 <b>Оплаченный заказ на доставку</b>",
     "",
+    `№ ${escapeHtml(record.id)}`,
     `👤 ${escapeHtml(record.guest_name)}`,
     `📞 ${escapeHtml(record.guest_phone)}`,
     `📍 ${escapeHtml(record.delivery_address)}`,
+    `🕐 ${escapeHtml(formatDateTime(record.created_at))}`,
     "",
     "<b>Состав:</b>",
     ...itemLines,
     "",
-    `💰 ${escapeHtml(record.total_amount)} ₽`,
+    `Блюда: ${formatMoney(total - deliveryFee)} ₽`,
+    `Доставка: ${formatMoney(deliveryFee)} ₽`,
+    `💰 <b>Итого: ${formatMoney(total)} ₽</b>`,
+    "✅ Оплата подтверждена",
   ];
+  if (record.comment) lines.push(`📝 ${escapeHtml(record.comment)}`);
   return lines.join("\n");
 }
 
-function formatMessage(payload: WebhookPayload): string | null {
-  if (payload.type !== "INSERT" || !payload.record) return null;
-  switch (payload.table) {
-    case "reservations":
-      return formatReservation(payload.record);
-    case "orders":
-      return formatOrder(payload.record);
-    default:
-      return null;
+async function formatMessage(payload: WebhookPayload): Promise<string | null> {
+  if (payload.table === "reservations" && payload.type === "INSERT" && payload.record) {
+    return formatReservation(payload.record);
   }
+
+  if (
+    payload.table === "orders" &&
+    payload.type === "UPDATE" &&
+    payload.record?.payment_status === "paid" &&
+    payload.old_record?.payment_status !== "paid"
+  ) {
+    return await formatOrder(payload.record);
+  }
+
+  return null;
 }
 
 async function sendTelegramMessage(text: string): Promise<void> {
@@ -128,10 +194,11 @@ Deno.serve(async (req) => {
     return new Response("Malformed webhook payload", { status: 400 });
   }
 
-  const message = formatMessage(payload);
+  const message = await formatMessage(payload);
   if (!message) {
-    // Not an event we notify on (e.g. UPDATE, or an unrecognized table) —
-    // acknowledge without erroring so Supabase doesn't retry pointlessly.
+    // Not an event we notify on (e.g. an order UPDATE that isn't the
+    // pending→paid transition, or an unrecognized table) — acknowledge
+    // without erroring so Supabase doesn't retry pointlessly.
     return new Response(JSON.stringify({ skipped: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

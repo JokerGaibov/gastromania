@@ -8,12 +8,15 @@ export const metadata: Metadata = {
   title: "Админ-панель — Gastromania",
 };
 
+// No adminOnly filtering — with the role model simplified to 'admin'/
+// 'customer' (lib/auth/roles.ts), anyone reaching this page is already
+// 'admin' (canAccessAdminPanel check below), so every link applies.
 const QUICK_LINKS = [
   { href: "/admin/reservations", label: "Брони" },
   { href: "/admin/menu", label: "Меню" },
   { href: "/admin/promotions", label: "Акции" },
   { href: "/admin/delivery", label: "Доставка" },
-  { href: "/admin/users", label: "Пользователи", adminOnly: true },
+  { href: "/admin/users", label: "Пользователи" },
 ];
 
 function StatTile({ label, value, href, accent }: { label: string; value: string; href?: string; accent?: "warn" }) {
@@ -85,8 +88,6 @@ export default async function AdminHomePage() {
     supabase.from("delivery_settings").select("is_delivery_enabled").eq("id", 1).single(),
   ]);
 
-  const links = QUICK_LINKS.filter((item) => !item.adminOnly || profile?.role === "admin");
-
   return (
     <div>
       <div className="mb-10">
@@ -120,7 +121,7 @@ export default async function AdminHomePage() {
       <div>
         <p className="label-refined text-[#0A0A0A]/40 mb-4">Быстрые переходы</p>
         <div className="flex flex-wrap gap-3">
-          {links.map((link) => (
+          {QUICK_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}

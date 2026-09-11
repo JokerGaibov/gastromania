@@ -7,28 +7,21 @@ import LogoutButton from "./LogoutButton";
 // each screen owning its own full-page wrapper was fine; with a second real
 // page it stopped being fine; hence pulling it up here now instead of
 // duplicating header/nav/logout per page.
+//
+// No per-item role filtering here — with the role model simplified to just
+// 'admin'/'customer' (see lib/auth/roles.ts), anyone who reaches this shell
+// at all is already 'admin' (app/admin/layout.tsx's gate), so every nav
+// item is relevant to everyone who can see it.
 const NAV_ITEMS = [
   { href: "/admin", label: "Обзор" },
   { href: "/admin/reservations", label: "Брони" },
   { href: "/admin/menu", label: "Меню" },
   { href: "/admin/promotions", label: "Акции" },
   { href: "/admin/delivery", label: "Доставка" },
-  // Матчит требование Блока 7.7: manager не должен иметь доступ к
-  // /admin/users, поэтому пункт скрыт для всех, кроме role === 'admin'.
-  // Сама страница защищена ещё раз на сервере (app/admin/users/page.tsx) —
-  // это только про то, чтобы не показывать ссылку в тупик.
-  { href: "/admin/users", label: "Пользователи", adminOnly: true },
+  { href: "/admin/users", label: "Пользователи" },
 ];
 
-export default function AdminShell({
-  children,
-  role,
-}: {
-  children: React.ReactNode;
-  role?: string | null;
-}) {
-  const items = NAV_ITEMS.filter((item) => !item.adminOnly || role === "admin");
-
+export default function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-[#F5F0E8] min-h-screen">
       <header className="border-b border-[#0A0A0A]/8 bg-white">
@@ -41,7 +34,7 @@ export default function AdminShell({
               Gastromania
             </span>
             <nav className="flex items-center gap-6 shrink-0">
-              {items.map((item) => (
+              {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

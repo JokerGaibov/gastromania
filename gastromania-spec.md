@@ -100,19 +100,63 @@ create table public.reservations (
 );
 
 -- заказы на доставку
+-- Обновлено 2026-09-11 (архитектура Блока 6 подготовлена заранее, до
+-- начала реализации — см. main.md v0.1.17): только онлайн-оплата,
+-- order_status и payment_status разведены по разным колонкам, состав
+-- заказа — отдельная таблица order_items со снэпшотом цены/названия на
+-- момент заказа (менять их задним числом через menu_items нельзя).
 create table public.orders (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid references public.profiles(id) on delete set null,
   guest_name text not null,
   guest_phone text not null,
   delivery_address text not null,
-  items jsonb not null,  -- [{menu_item_id, name, price, qty}]
-  total_amount numeric(10,2) not null,
-  payment_method text not null default 'on_delivery',
-  status text not null default 'new' check (status in ('new','in_progress','delivered','cancelled')),
+  total_amount numeric(10,2) not null,       -- items + delivery_fee, считает сервер
+  delivery_fee numeric(10,2) not null default 0,  -- снэпшот на момент оформления, не живая ссылка на delivery_settings
+  payment_method text not null default 'online' check (payment_method = 'online'),
+  payment_status text not null default 'pending'
+    check (payment_status in ('pending','paid','failed','refunded','cancelled')),
+  provider_payment_id text,                  -- id платежа у провайдера, когда он появится
+  paid_at timestamptz,                       -- пишет только серверный webhook, см. ниже
+  order_status text not null default 'new'
+    check (order_status in ('new','accepted','preparing','ready','out_for_delivery','delivered','cancelled')),
+  comment text,
   consent_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
+
+-- состав заказа — снэпшот, не живая ссылка на актуальные цены
+create table public.order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  menu_item_id uuid references public.menu_items(id) on delete set null,
+  name text not null,          -- название блюда на момент заказа
+  unit_price numeric(10,2) not null,  -- цена на момент заказа
+  quantity int not null check (quantity > 0),
+  subtotal numeric(10,2) not null,    -- unit_price * quantity
+  created_at timestamptz not null default now()
+);
+
+-- payment_status и paid_at может менять только запрос от имени
+-- service_role (реальный серверный webhook платёжного провайдера) —
+-- гарантируется триггером orders_guard_payment_status, а не соглашением на
+-- уровне приложения. redirect после оплаты — не доказательство оплаты,
+-- единственный источник истины — подтверждённое событие от провайдера.
+create or replace function public.guard_order_payment_status_change()
+returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if (new.payment_status is distinct from old.payment_status or new.paid_at is distinct from old.paid_at)
+     and auth.role() is distinct from 'service_role' then
+    raise exception 'payment_status и paid_at может менять только серверный webhook платёжного провайдера';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger orders_guard_payment_status
+  before update on public.orders
+  for each row execute function public.guard_order_payment_status_change();
 
 -- избранное
 create table public.favorites (
@@ -180,7 +224,30 @@ create policy "orders_insert_any" on public.orders
 create policy "orders_select_own_or_admin" on public.orders
   for select using (profile_id = auth.uid() or public.is_admin());
 create policy "orders_admin_manage" on public.orders
+  for update using (public.is_admin());  -- меняет order_status; payment_status/paid_at всё равно заблокированы триггером выше для всех, кроме service_role
+
+alter table public.order_items enable row level security;
+
+-- ВАЖНО, ещё не решено (см. gastromania-tasks.md, задача 6.5): insert
+-- открыт всем тем же принципом, что и orders_insert_any/
+-- reservations_insert_any — гость оформляет заказ без регистрации. Но это
+-- не защищает от вставки произвольной цены в обход сервера — до реального
+-- запуска checkout решить между security-definer RPC (единственный путь
+-- записи, сам считает цены) и другим механизмом.
+create policy "order_items_insert_any" on public.order_items
+  for insert with check (true);
+create policy "order_items_select_own_or_admin" on public.order_items
+  for select using (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_items.order_id
+        and (o.profile_id = auth.uid() or public.is_admin())
+    )
+  );
+create policy "order_items_admin_manage" on public.order_items
   for update using (public.is_admin());
+create policy "order_items_admin_delete" on public.order_items
+  for delete using (public.is_admin());
 
 -- избранное: только своё
 create policy "favorites_own" on public.favorites
@@ -237,7 +304,7 @@ app/
 
 **Стоп-лист.** Блюдо кончилось в 19:00, убрать его нужно за три секунды с телефона. Тумблер `is_active` в админке вывести крупно, админка обязана быть удобной на мобильном.
 
-**Оплата.** На старте только при получении (`payment_method = 'on_delivery'`). Онлайн-эквайринг (ЮKassa, Точка) добавлять вторым этапом, он требует юрлица, договора и отдельной работы.
+**Оплата.** Решение изменилось (2026-09-11): ресторан отказался от оплаты при получении — риск неоплаченных заказов неприемлем. Только `payment_method = 'online'`, схема под это уже подготовлена (`orders.payment_status`, `paid_at`, `provider_payment_id`, триггер `orders_guard_payment_status`). Кухня не начинает готовить, пока `payment_status <> 'paid'`. Конкретный провайдер (ЮKassa, Точка и т.д.) — отдельное решение владельца, подключение только после его подтверждения.
 
 **Ограничения доставки.** Зона, минимальная сумма, часы работы кухни. Форма заказа проверяет их до отправки, иначе будут заказы за город в час ночи.
 
@@ -276,5 +343,5 @@ app/
 ## Решить до старта
 
 1. ~~Регистрация: email и пароль, магическая ссылка или вход по телефону через SMS?~~ **Решено (2026-09-11): email + пароль.** Реализовано в Блоке 3.
-2. Кто ведёт админку в ресторане и с какого устройства? От этого зависит, насколько мобильной должна быть панель.
+2. ~~Кто ведёт админку в ресторане?~~ **Решено (2026-09-11): один сотрудник, роль `admin`, занимается всем — бронями, меню, акциями, доставкой, заказами.** Многоуровневая модель (`manager`/`waiter`/`courier`) была введена в Блоке 3, затем убрана обратно — не нужна. Устройство по-прежнему не уточнено, панель остаётся мобильно-ориентированной по умолчанию (см. Блок 7 в `gastromania-tasks.md`).
 3. Доставка своими курьерами или через агрегатор? Если агрегатор, часть логики заказов может отпасть.
