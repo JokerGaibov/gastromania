@@ -4,42 +4,48 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
+// Same Unsplash placeholders as before (kept — see gastromania-tasks.md:
+// the owner has real photos/video not added to the project yet). Captions
+// relabeled to real, generic categories (interior/atmosphere/food) instead
+// of the old Nordic-tasting-menu poetry, so the structure is honest about
+// what these images actually are: placeholders standing in for real photos
+// in these categories, not real dishes or a real dining room.
 const images = [
   {
     src: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80&auto=format&fit=crop",
-    alt: "Зал Gastromania",
+    alt: "Интерьер зала (временное фото)",
     span: "col-span-2 row-span-2",
-    caption: "Обеденный зал",
+    caption: "Интерьер",
   },
   {
     src: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80&auto=format&fit=crop",
-    alt: "Деталь сервированного блюда",
+    alt: "Подача блюда (временное фото)",
     span: "col-span-1 row-span-1",
-    caption: "Камень и Берег",
+    caption: "Блюда",
   },
   {
     src: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80&auto=format&fit=crop",
-    alt: "Сезонная композиция",
+    alt: "Композиция на тарелке (временное фото)",
     span: "col-span-1 row-span-1",
-    caption: "Первый Снег",
+    caption: "Блюда",
   },
   {
     src: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&q=80&auto=format&fit=crop",
-    alt: "Винный погреб",
+    alt: "Атмосфера вечера (временное фото)",
     span: "col-span-1 row-span-2",
-    caption: "Погреб",
+    caption: "Атмосфера",
   },
   {
     src: "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=900&q=80&auto=format&fit=crop",
-    alt: "Деталь кухни",
+    alt: "Кухня (временное фото)",
     span: "col-span-2 row-span-1",
-    caption: "Кухня на рассвете",
+    caption: "На кухне",
   },
   {
     src: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600&q=80&auto=format&fit=crop",
-    alt: "Сервировка стола",
+    alt: "Сервировка стола (временное фото)",
     span: "col-span-1 row-span-1",
-    caption: "Композиция стола",
+    caption: "Сервировка",
   },
 ];
 

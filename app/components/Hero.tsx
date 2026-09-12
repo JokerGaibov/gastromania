@@ -62,7 +62,7 @@ export default function Hero() {
           >
             <div className="w-8 h-px bg-[#8C7355]" />
             <span className="label-refined text-[#8C7355]">
-              Три звезды Мишлен · Копенгаген
+              Москва · м. Дубровка
             </span>
           </motion.div>
 
@@ -109,7 +109,7 @@ export default function Hero() {
               style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300, letterSpacing: "0.02em" }}
               className="text-[#F5F0E8]/65 text-xl italic max-w-xs"
             >
-              Камерное путешествие сквозь сезоны. Восемнадцать гостей, одно вечернее видение.
+              Международная команда кухни. Восточная традиция в современной подаче.
             </p>
             <div className="flex items-center gap-6">
               <MagneticButton>
@@ -118,7 +118,7 @@ export default function Hero() {
                   className="group flex items-center gap-4"
                 >
                   <span className="label-refined text-[#F5F0E8] group-hover:text-[#8C7355] transition-colors duration-300">
-                    Забронировать вечер
+                    Забронировать столик
                   </span>
                   <span className="w-8 h-px bg-[#8C7355] group-hover:w-12 transition-all duration-500" />
                 </button>
@@ -127,21 +127,10 @@ export default function Hero() {
           </motion.div>
         </div>
 
-        {/* Bottom metadata row */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.3 }}
-          className="absolute bottom-8 right-8 lg:right-16 flex flex-col items-end gap-1"
-        >
-          <span className="label-refined text-[#F5F0E8]/30">Дегустационное меню</span>
-          <span
-            style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300, letterSpacing: "0.1em" }}
-            className="text-[#F5F0E8]/50 text-sm"
-          >
-            18 блюд · 4,5 часа
-          </span>
-        </motion.div>
+        {/* Bottom metadata row — removed the old "18 блюд · 4,5 часа" tasting
+            menu claim (invented, and simply doesn't apply here). Full menu
+            details are still pending from the owner — see
+            gastromania-tasks.md — nothing honest to put here yet. */}
       </motion.div>
 
       {/* Scroll indicator */}

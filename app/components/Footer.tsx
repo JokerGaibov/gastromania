@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 
-const legalLinks = [
-  { label: "Конфиденциальность", href: "/privacy" },
-  { label: "Доступность", href: "#" },
-  { label: "Пресса", href: "#" },
-];
+// Only real, working links — no href="#" placeholders to nowhere.
+const legalLinks = [{ label: "Конфиденциальность", href: "/privacy" }];
 
 export default function Footer() {
   return (
@@ -26,18 +23,14 @@ export default function Footer() {
               style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
               className="text-[#8C7355]/60 uppercase mt-1"
             >
-              Копенгаген · С 2018 года
+              Москва · м. Дубровка
             </span>
           </div>
 
-          {/* Center — Michelin note */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex gap-2 items-center">
-              {[1, 2, 3].map((i) => (
-                <span key={i} className="text-[#8C7355]" style={{ fontSize: "0.65rem" }}>★</span>
-              ))}
-            </div>
-            <span className="label-refined text-[#F5F0E8]/25">Три звезды Мишлен</span>
+          {/* Center — location note (real address, no invented rating/award) */}
+          <div className="flex flex-col items-center gap-1 text-center">
+            <span className="label-refined text-[#F5F0E8]/40">ул. 7-я Кожуховская, 9</span>
+            <span className="label-refined text-[#F5F0E8]/25">ТЦ «Мозаика»</span>
           </div>
 
           {/* Right — Links */}
@@ -57,7 +50,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-16 pt-8 border-t border-[rgba(245,240,232,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="label-refined text-[#F5F0E8]/18" style={{ fontSize: "0.55rem" }}>
-            © {new Date().getFullYear()} Gastromania ApS. Все права защищены.
+            © {new Date().getFullYear()} Gastromania. Все права защищены.
           </span>
           <span
             style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300, fontStyle: "italic", letterSpacing: "0.04em" }}

@@ -4,17 +4,21 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { smoothScrollTo } from "@/lib/motion";
+import { createClient } from "@/lib/supabase/client";
 import MagneticButton from "./MagneticButton";
 
-// Mix of in-page scroll anchors ("#...") and a real route ("/delivery") —
-// handleLinkClick below branches on which kind each one is.
+// Mix of in-page scroll anchors ("#..."), real routes ("/promotions",
+// "/delivery"), and "/" (home — special-cased in handleLinkClick to scroll
+// to top rather than navigate, since this component only ever renders on
+// the homepage itself).
+// No "Меню" entry pointing at "#dishes" — SignatureDishes isn't rendered
+// on the page (invented dish content, see app/page.tsx), and "Доставка"
+// below already goes to the one place with a real, DB-backed menu.
 const navLinks = [
-  { label: "История", href: "#story" },
-  { label: "Шеф", href: "#chef" },
-  { label: "Меню", href: "#dishes" },
+  { label: "Главная", href: "/" },
+  { label: "О ресторане", href: "#story" },
+  { label: "Акции", href: "/promotions" },
   { label: "Доставка", href: "/delivery" },
-  { label: "Галерея", href: "#gallery" },
-  { label: "Контакты", href: "#contact" },
 ];
 
 export default function Navigation() {
@@ -22,6 +26,8 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState<string>("");
+  const [accountHref, setAccountHref] = useState("/login");
+  const [accountLabel, setAccountLabel] = useState("Вход");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -29,10 +35,22 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Read-only session check purely to decide the label/target of the
+  // account link below — doesn't touch auth state, RLS, or anything else.
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setAccountHref("/account/orders");
+        setAccountLabel("Аккаунт");
+      }
+    });
+  }, []);
+
   useEffect(() => {
     // Only "#..." entries are scroll anchors — document.querySelector()
     // throws on a non-CSS-selector string like "/delivery", so real routes
-    // must be filtered out before this runs.
+    // (and "/") must be filtered out before this runs.
     const sections = navLinks
       .filter((link) => link.href.startsWith("#"))
       .map((link) => document.querySelector<HTMLElement>(link.href))
@@ -54,7 +72,9 @@ export default function Navigation() {
 
   const handleLinkClick = (href: string) => {
     setMenuOpen(false);
-    if (href.startsWith("#")) {
+    if (href === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (href.startsWith("#")) {
       smoothScrollTo(href);
     } else {
       router.push(href);
@@ -90,12 +110,12 @@ export default function Navigation() {
               style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
               className="text-[#8C7355] uppercase mt-0.5"
             >
-              С 2018 года
+              Москва · м. Дубровка
             </span>
           </a>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-10">
+          <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <button
                 key={link.href}
@@ -109,17 +129,23 @@ export default function Navigation() {
             ))}
           </nav>
 
-          {/* Reserve CTA */}
-          <div className="hidden lg:flex items-center gap-8">
+          {/* Reserve CTA + account */}
+          <div className="hidden lg:flex items-center gap-6">
             <div className="w-px h-5 bg-[rgba(245,240,232,0.2)]" />
             <MagneticButton>
               <button
                 onClick={() => handleLinkClick("#reservation")}
                 className="label-refined text-[#8C7355] hover:text-[#F5F0E8] transition-colors duration-300"
               >
-                Забронировать столик
+                Брони
               </button>
             </MagneticButton>
+            <button
+              onClick={() => router.push(accountHref)}
+              className="label-refined text-[#F5F0E8]/60 hover:text-[#F5F0E8] transition-colors duration-300"
+            >
+              {accountLabel}
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -157,7 +183,7 @@ export default function Navigation() {
             transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="fixed inset-0 z-40 bg-[#0A0A0A] flex flex-col items-center justify-center"
           >
-            <nav className="flex flex-col items-center gap-8">
+            <nav className="flex flex-col items-center gap-7">
               {navLinks.map((link, i) => (
                 <motion.button
                   key={link.href}
@@ -177,7 +203,19 @@ export default function Navigation() {
                 onClick={() => handleLinkClick("#reservation")}
                 className="mt-4 label-refined text-[#8C7355] border border-[#8C7355]/40 px-8 py-3 hover:border-[#8C7355] transition-colors"
               >
-                Забронировать столик
+                Брони
+              </motion.button>
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  router.push(accountHref);
+                }}
+                className="label-refined text-[#F5F0E8]/50 hover:text-[#F5F0E8] transition-colors"
+              >
+                {accountLabel}
               </motion.button>
             </nav>
           </motion.div>

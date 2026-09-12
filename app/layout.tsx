@@ -28,16 +28,39 @@ const inter = Inter({
   display: "swap",
 });
 
+// Real facts only — no invented rating, awards, or reviews (see
+// gastromania-tasks.md "Найдено по ходу" / v0.1.21 for what's still
+// pending from the client: hours, phone, email, real photos).
+const SITE_NAME = "Gastromania";
+const SITE_DESCRIPTION =
+  "Ресторан Gastromania в Москве, у метро Дубровка — ТЦ «Мозаика», ул. 7-я Кожуховская, 9. Международная команда кухни, бронирование столика и доставка.";
+
 export const metadata: Metadata = {
-  title: "Gastromania — Высокая кухня",
-  description:
-    "Камерный гастрономический опыт, где кулинарное искусство встречается с сезонной чистотой вкуса. Gastromania — три звезды Мишлен, одно видение.",
+  title: `${SITE_NAME} — ресторан в Москве у метро Дубровка`,
+  description: SITE_DESCRIPTION,
   openGraph: {
-    title: "Gastromania — Высокая кухня",
-    description:
-      "Камерный гастрономический опыт, где кулинарное искусство встречается с сезонной чистотой вкуса.",
+    title: `${SITE_NAME} — ресторан в Москве у метро Дубровка`,
+    description: SITE_DESCRIPTION,
     type: "website",
+    locale: "ru_RU",
+    siteName: SITE_NAME,
   },
+};
+
+// Basic local-restaurant structured data — name and location only. No
+// aggregateRating/review: nothing here is fabricated, and there's no real
+// rating data to report yet.
+const restaurantJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  name: SITE_NAME,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "ул. 7-я Кожуховская, 9, ТЦ «Мозаика»",
+    addressLocality: "Москва",
+    addressCountry: "RU",
+  },
+  areaServed: "Москва",
 };
 
 export default function RootLayout({
@@ -51,6 +74,10 @@ export default function RootLayout({
       className={`${playfair.variable} ${cormorant.variable} ${inter.variable} h-full`}
     >
       <body className="min-h-full antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantJsonLd) }}
+        />
         <MotionProvider>
           <ScrollProgress />
           <CartProvider>{children}</CartProvider>

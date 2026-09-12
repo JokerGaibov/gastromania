@@ -89,7 +89,7 @@ export default function Story() {
                 style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300, letterSpacing: "0.01em" }}
                 className="text-[#F5F0E8]/70 text-2xl italic leading-relaxed mb-8"
               >
-                &ldquo;Каждое блюдо — это разговор между землёй и поваром. Мы слушаем, прежде чем творить.&rdquo;
+                &ldquo;Кухня без границ — там, где восточная традиция встречает современную подачу.&rdquo;
               </p>
             </FadeUp>
             <FadeUp delay={0.2}>
@@ -97,9 +97,10 @@ export default function Story() {
                 className="text-[#F5F0E8]/55 text-sm leading-loose mb-8 font-body"
                 style={{ letterSpacing: "0.02em" }}
               >
-                Gastromania родился из одного убеждения: высокая кухня — это акт перевода —
-                от поля к кухне и к столу. Наше дегустационное меню меняется с каждым урожаем, каждым приливом,
-                с особым характером каждого сезона. Ничто не фиксировано. Всё намеренно.
+                Gastromania объединяет шеф-поваров, чей профессиональный путь прошёл через Турцию, Катар,
+                Объединённые Арабские Эмираты, Оман, Украину и Ирак. Каждый принёс с собой часть своей
+                кухонной традиции — вместе они выстраивают меню, которое говорит на языке международного
+                гостеприимства.
               </p>
             </FadeUp>
             <FadeUp delay={0.3}>
@@ -107,9 +108,9 @@ export default function Story() {
                 className="text-[#F5F0E8]/55 text-sm leading-loose font-body"
                 style={{ letterSpacing: "0.02em" }}
               >
-                Мы закупаем продукты исключительно в радиусе 100 километров от нашей кухни — это ограничение
-                мы считаем творческим даром. Восемнадцать мест. Один прием гостей за вечер. Кухня как театр.
-                Стол как святилище.
+                Мы верим, что современная подача не противоречит традиции, а раскрывает её. Каждое блюдо
+                задумано так, чтобы быть одновременно узнаваемым и неожиданным — с вниманием к деталям,
+                которое приходит только с большим опытом.
               </p>
             </FadeUp>
           </div>
@@ -154,33 +155,29 @@ export default function Story() {
           </div>
         </motion.div>
 
-        {/* Awards row */}
-        <div
-          ref={statsRef}
-          className="mt-24 pt-16 border-t border-[rgba(245,240,232,0.08)] grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-16"
-        >
-          {[
-            { num: "3", label: "Звезды Мишлен" },
-            { num: "18", label: "Гостей за вечер" },
-            { num: "#4", label: "В рейтинге World's 50 Best" },
-            { num: "100", label: "Км радиус закупок" },
-          ].map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 30 }}
-              animate={statsInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: i * 0.1, ease }}
-              className="flex flex-col gap-2"
-            >
-              <span
-                className="heading-editorial text-[#8C7355]"
-                style={{ fontSize: "clamp(2.5rem, 4vw, 3.5rem)" }}
+        {/* International presence — real countries our kitchen team has
+            worked in (see Chef.tsx bios), not an invented rating/award. No
+            fabricated numbers here in place of the old (fictitious)
+            Michelin/World's 50 Best claims. */}
+        <div className="mt-24 pt-16 border-t border-[rgba(245,240,232,0.08)]">
+          <span className="label-refined text-[#F5F0E8]/30 block mb-8">Опыт нашей команды</span>
+          <div ref={statsRef} className="grid grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-16">
+            {["Турция", "Катар", "ОАЭ и Оман", "Украина", "Ирак", "Россия"].map((country, i) => (
+              <motion.div
+                key={country}
+                initial={{ opacity: 0, y: 30 }}
+                animate={statsInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8, delay: i * 0.08, ease }}
               >
-                {item.num}
-              </span>
-              <span className="label-refined text-[#F5F0E8]/45">{item.label}</span>
-            </motion.div>
-          ))}
+                <span
+                  className="heading-editorial text-[#8C7355] block"
+                  style={{ fontSize: "clamp(1.5rem, 3vw, 2.25rem)" }}
+                >
+                  {country}
+                </span>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

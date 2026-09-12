@@ -291,7 +291,7 @@ export default function SignatureDishes() {
           className="mt-20 pt-16 border-t border-[rgba(245,240,232,0.08)] flex items-center justify-between"
         >
           <p className="text-[#F5F0E8]/35 text-sm font-body" style={{ letterSpacing: "0.06em" }}>
-            ДЕГУСТАЦИОННОЕ МЕНЮ · 18 БЛЮД · СЕЗОННОЕ
+            АВТОРСКИЕ БЛЮДА · СЕЗОННОЕ МЕНЮ
           </p>
           <MagneticButton>
             <button
@@ -299,7 +299,7 @@ export default function SignatureDishes() {
               className="group flex items-center gap-4 hover:gap-6 transition-all duration-500"
             >
               <span className="label-refined text-[#F5F0E8]/70 group-hover:text-[#F5F0E8] transition-colors">
-                Полное меню
+                Забронировать столик
               </span>
               <div className="w-8 h-px bg-[#8C7355]" />
             </button>
