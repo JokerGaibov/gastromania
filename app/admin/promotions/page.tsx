@@ -81,7 +81,7 @@ export default async function AdminPromotionsPage() {
                 {promo.image_url && (
                   <Image
                     src={promo.image_url}
-                    alt=""
+                    alt={promo.title}
                     width={64}
                     height={64}
                     className="w-full h-full object-cover"

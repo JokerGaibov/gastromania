@@ -7,6 +7,7 @@ import Gallery from "./components/Gallery";
 import Contact from "./components/Contact";
 import CallToAction from "./components/CallToAction";
 import Footer from "./components/Footer";
+import MobileContactCTA from "./components/MobileContactCTA";
 
 // SignatureDishes is deliberately not rendered — its dish content is
 // invented Nordic-tasting-menu copy that doesn't match this restaurant's
@@ -26,6 +27,7 @@ export default function Home() {
       <Contact />
       <CallToAction />
       <Footer />
+      <MobileContactCTA />
     </main>
   );
 }

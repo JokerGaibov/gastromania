@@ -27,10 +27,16 @@ export default function Footer() {
             </span>
           </div>
 
-          {/* Center — location note (real address, no invented rating/award) */}
+          {/* Center — location + phone (real, from the owner — 2026-09-12) */}
           <div className="flex flex-col items-center gap-1 text-center">
             <span className="label-refined text-[#F5F0E8]/40">ул. 7-я Кожуховская, 9</span>
             <span className="label-refined text-[#F5F0E8]/25">ТЦ «Мозаика»</span>
+            <a
+              href="tel:+79955552227"
+              className="label-refined text-[#8C7355]/70 hover:text-[#8C7355] transition-colors duration-300 mt-1"
+            >
+              +7 995 555-22-27
+            </a>
           </div>
 
           {/* Right — Links */}
@@ -39,7 +45,7 @@ export default function Footer() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="label-refined text-[#F5F0E8]/25 hover:text-[#F5F0E8]/60 transition-colors duration-300"
+                className="label-refined text-[#F5F0E8]/55 hover:text-[#F5F0E8]/90 transition-colors duration-300"
               >
                 {link.label}
               </Link>

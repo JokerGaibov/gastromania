@@ -42,7 +42,7 @@ export default function PrivacyPage() {
                 style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
                 className="text-[#8C7355] uppercase mt-0.5"
               >
-                С 2018 года
+                Москва · м. Дубровка
               </span>
             </Link>
             <Link
@@ -133,8 +133,8 @@ export default function PrivacyPage() {
                     <li>факт и момент согласия на обработку персональных данных.</li>
                   </ul>
                   <p>
-                    Если в будущем на сайте появится личный кабинет, авторизованные брони также будут
-                    связаны с вашей учётной записью.
+                    Если вы авторизованы на сайте, ваша бронь автоматически связывается с вашей
+                    учётной записью и видна вам в личном кабинете.
                   </p>
                 </div>
               </section>
@@ -221,15 +221,10 @@ export default function PrivacyPage() {
                   9. Как с нами связаться
                 </h2>
                 <div className="text-[#0A0A0A]/70 text-[0.9375rem] leading-relaxed font-body space-y-1.5">
-                  <p>По вопросам обработки персональных данных пишите или звоните:</p>
+                  <p>По вопросам обработки персональных данных звоните:</p>
                   <p>
-                    <a href="mailto:reservations@gastronomia.dk" className="text-[#8C7355] underline underline-offset-2 hover:text-[#0A0A0A] transition-colors">
-                      reservations@gastronomia.dk
-                    </a>
-                  </p>
-                  <p>
-                    <a href="tel:+4512345678" className="text-[#8C7355] underline underline-offset-2 hover:text-[#0A0A0A] transition-colors">
-                      +45 12 34 56 78
+                    <a href="tel:+79955552227" className="text-[#8C7355] underline underline-offset-2 hover:text-[#0A0A0A] transition-colors">
+                      +7 995 555-22-27
                     </a>
                   </p>
                 </div>

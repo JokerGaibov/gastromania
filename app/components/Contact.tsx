@@ -98,6 +98,22 @@ export default function Contact() {
             <motion.div
               initial={{ opacity: 0, y: 25 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, delay: 0.25, ease }}
+              className="py-8 border-b border-[rgba(245,240,232,0.08)]"
+            >
+              <span className="label-refined text-[#8C7355] block mb-4">Телефон</span>
+              <a
+                href="tel:+79955552227"
+                style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300 }}
+                className="text-[#F5F0E8]/75 text-xl leading-relaxed hover:text-[#8C7355] transition-colors duration-300"
+              >
+                +7 995 555-22-27
+              </a>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 25 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.3, ease }}
               className="py-8 border-b border-[rgba(245,240,232,0.08)]"
             >
@@ -114,25 +130,41 @@ export default function Contact() {
               className="py-8"
             >
               <span className="label-refined text-[#8C7355] block mb-4">Часы работы</span>
-              <p className="text-[#F5F0E8]/40 text-sm font-body italic">Уточняется</p>
+              <p style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300 }} className="text-[#F5F0E8]/75 text-xl leading-relaxed">
+                Круглосуточно
+              </p>
             </motion.div>
           </div>
         </div>
 
-        {/* Map placeholder — no external map API wired up yet, on purpose:
-            no key configured, and pulling one in wasn't necessary for this
-            pass. Swapping this block for a real embed later doesn't touch
-            anything else on the page. */}
+        {/* Real footage of the route/entrance/parking, replacing the map
+            placeholder — no map API key configured, and this is more useful
+            than a text box anyway. Only mounts (and only then starts
+            fetching video bytes) once this section is actually in view. */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.9, delay: 0.3, ease }}
-          className="rounded-[4px] border border-[rgba(245,240,232,0.1)] bg-[#0F0F0D] aspect-[21/9] flex flex-col items-center justify-center gap-3"
+          className="relative rounded-[4px] overflow-hidden border border-[rgba(245,240,232,0.1)] bg-[#0F0F0D] aspect-[21/9]"
         >
-          <span className="label-refined text-[#F5F0E8]/25">Карта появится здесь</span>
+          {inView && (
+            <video
+              muted
+              autoPlay
+              loop
+              playsInline
+              preload="none"
+              poster="/videos/gastromania-directions-poster.jpg"
+              className="absolute inset-0 w-full h-full object-cover"
+              ref={(el) => { el?.play().catch(() => {}); }}
+            >
+              <source src="/videos/gastromania-directions.mp4" type="video/mp4" />
+            </video>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/80 via-transparent to-transparent" />
           <span
             style={{ fontFamily: "var(--font-cormorant)", fontWeight: 300 }}
-            className="text-[#F5F0E8]/40 text-lg italic text-center px-8"
+            className="absolute bottom-5 left-6 right-6 text-[#F5F0E8]/85 text-lg italic text-center sm:text-left"
           >
             Москва, ул. 7-я Кожуховская, 9, ТЦ «Мозаика» · м. Дубровка
           </span>

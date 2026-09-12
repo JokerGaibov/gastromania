@@ -62,7 +62,7 @@ export default async function AccountOrdersPage() {
               style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
               className="text-[#8C7355] uppercase mt-0.5"
             >
-              С 2018 года
+              Москва · м. Дубровка
             </span>
           </Link>
           <Link href="/" className="label-refined text-[#0A0A0A]/50 hover:text-[#0A0A0A] transition-colors duration-300">

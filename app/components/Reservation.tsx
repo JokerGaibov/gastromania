@@ -21,13 +21,6 @@ import { submitReservation } from "./reservation/actions";
 const ease = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
 const springIn = [0.16, 1, 0.3, 1] as [number, number, number, number];
 
-const details = [
-  { label: "Дегустационное меню", value: "2 800 DKK" },
-  { label: "Винная пара", value: "1 400 DKK" },
-  { label: "Длительность", value: "4–5 часов" },
-  { label: "Дресс-код", value: "Smart Casual" },
-];
-
 const COMMENT_MAX = 240;
 
 // Mirrors the `reservations` table columns from gastromania-spec.md (Этап 3)
@@ -170,7 +163,7 @@ export default function Reservation() {
               <span className="label-refined text-[#8C7355]">Забронируйте ваш вечер</span>
             </motion.div>
 
-            {["Столик", "на восемнадцать.", "Ждёт вас."].map((line, i) => (
+            {["Столик", "для вас", "уже ждёт."].map((line, i) => (
               <div key={line} className="overflow-hidden mb-2">
                 <motion.h2
                   initial={{ y: "100%" }}
@@ -190,24 +183,10 @@ export default function Reservation() {
               transition={{ duration: 0.9, delay: 0.6, ease }}
             >
               <p className="text-[#0A0A0A]/50 text-sm leading-loose font-body mb-10 mt-8" style={{ letterSpacing: "0.02em" }}>
-                Приём гостей доступен со вторника по субботу, начиная с 19:00.
+                Организованные брони принимаются на вечер, начиная с 19:00.
                 Мы принимаем до шести гостей на одно бронирование. Особые требования к питанию
                 учитываются при уведомлении за двадцать четыре часа.
               </p>
-
-              <div className="grid grid-cols-2 gap-8 pt-8 border-t border-[#0A0A0A]/10">
-                {details.map((item) => (
-                  <div key={item.label}>
-                    <span className="label-refined text-[#0A0A0A]/35 block mb-1">{item.label}</span>
-                    <span
-                      style={{ fontFamily: "var(--font-cormorant)", fontWeight: 400, letterSpacing: "0.02em" }}
-                      className="text-[#0A0A0A]/75 text-lg"
-                    >
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </motion.div>
           </div>
 

@@ -2,9 +2,29 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import Image from "next/image";
 
 const ease = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
+
+// Real Gastromania footage, cut to short scene fragments (not the old
+// broken Unsplash placeholders) — see main.md changelog for exact
+// source/start/end per clip. No fragment reused between these three tiles.
+const storyClips = [
+  {
+    src: "/videos/story/gastromania-story-kitchen-overall.mp4",
+    poster: "/videos/story/gastromania-story-kitchen-overall-poster.jpg",
+    caption: "Кухня Gastromania",
+  },
+  {
+    src: "/videos/story/gastromania-story-ingredients.mp4",
+    poster: "/videos/story/gastromania-story-ingredients-poster.jpg",
+    caption: "Сезонные ингредиенты",
+  },
+  {
+    src: "/videos/story/gastromania-story-process.mp4",
+    poster: "/videos/story/gastromania-story-process-poster.jpg",
+    caption: "Процесс приготовления",
+  },
+] as const;
 
 function FadeUp({ children, delay = 0, className }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -124,34 +144,47 @@ export default function Story() {
           transition={{ duration: 1.2, ease }}
           className="mt-24 lg:mt-32 grid lg:grid-cols-3 gap-px"
         >
-          <div className="relative lg:col-span-2 img-zoom aspect-[16/10] overflow-hidden">
-            <Image
-              src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=1200&q=80&auto=format&fit=crop"
-              alt="Кухня Gastromania"
-              fill
-              sizes="(max-width: 1024px) 100vw, 66vw"
-              className="object-cover"
-            />
+          <div className="relative lg:col-span-2 aspect-[16/10] overflow-hidden" aria-label={storyClips[0].caption}>
+            {imgInView && (
+              <video
+                muted
+                autoPlay
+                loop
+                playsInline
+                preload="none"
+                poster={storyClips[0].poster}
+                className="absolute inset-0 w-full h-full object-cover"
+                ref={(el) => { el?.play().catch(() => {}); }}
+              >
+                <source src={storyClips[0].src} type="video/mp4" />
+              </video>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/70 via-transparent to-transparent pointer-events-none" />
+            <span className="absolute bottom-5 left-6 label-refined text-[#F5F0E8]">{storyClips[0].caption}</span>
           </div>
           <div className="flex flex-col gap-px">
-            <div className="relative img-zoom flex-1 overflow-hidden">
-              <Image
-                src="https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=600&q=80&auto=format&fit=crop"
-                alt="Сезонные ингредиенты"
-                fill
-                sizes="(max-width: 1024px) 50vw, 33vw"
-                className="object-cover"
-              />
-            </div>
-            <div className="relative img-zoom flex-1 overflow-hidden">
-              <Image
-                src="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=600&q=80&auto=format&fit=crop"
-                alt="Процесс приготовления"
-                fill
-                sizes="(max-width: 1024px) 50vw, 33vw"
-                className="object-cover"
-              />
-            </div>
+            {storyClips.slice(1).map((clip) => (
+              <div key={clip.src} className="relative flex-1 aspect-[16/10] lg:aspect-auto overflow-hidden" aria-label={clip.caption}>
+                {imgInView && (
+                  <video
+                    muted
+                    autoPlay
+                    loop
+                    playsInline
+                    preload="none"
+                    poster={clip.poster}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    ref={(el) => { el?.play().catch(() => {}); }}
+                  >
+                    <source src={clip.src} type="video/mp4" />
+                  </video>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/70 via-transparent to-transparent pointer-events-none" />
+                <span className="absolute bottom-4 left-5 label-refined text-[#F5F0E8]" style={{ fontSize: "0.6rem" }}>
+                  {clip.caption}
+                </span>
+              </div>
+            ))}
           </div>
         </motion.div>
 

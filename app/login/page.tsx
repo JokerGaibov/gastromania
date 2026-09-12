@@ -34,7 +34,7 @@ export default async function LoginPage({
                 style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
                 className="text-[#8C7355] uppercase mt-0.5"
               >
-                С 2018 года
+                Москва · м. Дубровка
               </span>
             </Link>
             <Link

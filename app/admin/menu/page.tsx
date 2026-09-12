@@ -88,7 +88,7 @@ export default async function AdminMenuPage() {
                       {item.image_url && (
                         <Image
                           src={item.image_url}
-                          alt=""
+                          alt={item.name}
                           width={64}
                           height={64}
                           className="w-full h-full object-cover"

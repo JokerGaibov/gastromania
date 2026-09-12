@@ -29,11 +29,11 @@ const inter = Inter({
 });
 
 // Real facts only — no invented rating, awards, or reviews (see
-// gastromania-tasks.md "Найдено по ходу" / v0.1.21 for what's still
-// pending from the client: hours, phone, email, real photos).
+// gastromania-tasks.md "Найдено по ходу" for what's still pending from
+// the client: email, real photos).
 const SITE_NAME = "Gastromania";
 const SITE_DESCRIPTION =
-  "Ресторан Gastromania в Москве, у метро Дубровка — ТЦ «Мозаика», ул. 7-я Кожуховская, 9. Международная команда кухни, бронирование столика и доставка.";
+  "Ресторан Gastromania в Москве, у метро Дубровка — ТЦ «Мозаика», ул. 7-я Кожуховская, 9. Работаем круглосуточно. Международная команда кухни, бронирование столика и доставка.";
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} — ресторан в Москве у метро Дубровка`,
@@ -54,6 +54,7 @@ const restaurantJsonLd = {
   "@context": "https://schema.org",
   "@type": "Restaurant",
   name: SITE_NAME,
+  telephone: "+79955552227",
   address: {
     "@type": "PostalAddress",
     streetAddress: "ул. 7-я Кожуховская, 9, ТЦ «Мозаика»",
@@ -61,6 +62,12 @@ const restaurantJsonLd = {
     addressCountry: "RU",
   },
   areaServed: "Москва",
+  openingHoursSpecification: {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    opens: "00:00",
+    closes: "23:59",
+  },
 };
 
 export default function RootLayout({

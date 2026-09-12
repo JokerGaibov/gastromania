@@ -51,7 +51,7 @@ export default function ImageUpload({
       <div className="flex items-center gap-4">
         <div className="w-20 h-20 rounded-[12px] border border-[#0A0A0A]/10 bg-[#F5F0E8] overflow-hidden flex items-center justify-center shrink-0">
           {value ? (
-            <Image src={value} alt="" width={80} height={80} className="w-full h-full object-cover" />
+            <Image src={value} alt="Текущее фото" width={80} height={80} className="w-full h-full object-cover" />
           ) : (
             <span className="w-6 h-6 text-[#0A0A0A]/25">
               <ImageIcon />

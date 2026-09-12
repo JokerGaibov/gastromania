@@ -32,10 +32,12 @@ export default function Chef() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLDivElement>(null);
   const teamRef = useRef<HTMLDivElement>(null);
 
   const textInView = useInView(textRef, { once: true, margin: "-10%" });
   const imageInView = useInView(imageRef, { once: true, margin: "-10%" });
+  const videoInView = useInView(videoRef, { once: true, margin: "-10%" });
   const teamInView = useInView(teamRef, { once: true, margin: "-10%" });
 
   return (
@@ -160,6 +162,25 @@ export default function Chef() {
               </p>
             </motion.div>
           </div>
+        </div>
+
+        {/* Real kitchen footage — a cinematic break before the team grid.
+            Only mounts (and only then fetches video bytes) once in view. */}
+        <div ref={videoRef} className="relative w-full aspect-[21/9] lg:aspect-[32/9] overflow-hidden bg-[#1C1C1C]">
+          {videoInView && (
+            <video
+              muted
+              autoPlay
+              loop
+              playsInline
+              preload="none"
+              poster="/videos/gastromania-kitchen-poster.jpg"
+              className="absolute inset-0 w-full h-full object-cover"
+              ref={(el) => { el?.play().catch(() => {}); }}
+            >
+              <source src="/videos/gastromania-kitchen.mp4" type="video/mp4" />
+            </video>
+          )}
         </div>
 
         {/* Kitchen team */}
