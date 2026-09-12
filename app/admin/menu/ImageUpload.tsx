@@ -5,6 +5,14 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { ImageIcon } from "../../components/reservation/icons";
 
+// Mirrors the "menu-images" bucket's file_size_limit/allowed_mime_types
+// (20260912100000) so the user sees an immediate, specific error instead
+// of a generic upload failure — this is a UX convenience only, NOT the
+// real restriction: Supabase Storage itself rejects anything outside
+// these bounds regardless of what this component does or doesn't check.
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
 // Uploads straight from the browser to Supabase Storage using the signed-in
 // user's own session — no server action file relay needed. Protected by the
 // menu_images_staff_write RLS policy on storage.objects (originally
@@ -22,8 +30,18 @@ export default function ImageUpload({
   const [error, setError] = useState<string | null>(null);
 
   async function handleFile(file: File) {
-    setUploading(true);
     setError(null);
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      setError("Неподдерживаемый формат. Разрешены JPEG, PNG, WebP, AVIF.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError("Файл слишком большой. Максимум 5 МБ.");
+      return;
+    }
+
+    setUploading(true);
     try {
       const supabase = createClient();
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -63,7 +81,7 @@ export default function ImageUpload({
             {uploading ? "Загружаем…" : value ? "Заменить фото" : "Загрузить фото"}
             <input
               type="file"
-              accept="image/*"
+              accept={ALLOWED_MIME_TYPES.join(",")}
               className="hidden"
               disabled={uploading}
               onChange={(e) => {

@@ -10,6 +10,14 @@ import { ImageIcon } from "../../components/reservation/icons";
 // component — the owner explicitly asked not to touch already-working
 // /admin/menu while building this batch, so the working version stays
 // untouched instead of being refactored into something both pages share.
+
+// Mirrors the "promo-images" bucket's file_size_limit/allowed_mime_types
+// (20260912100000) — UX convenience only, NOT the real restriction:
+// Supabase Storage itself rejects anything outside these bounds regardless
+// of what this component does or doesn't check.
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
 export default function ImageUpload({
   value,
   onChange,
@@ -21,8 +29,18 @@ export default function ImageUpload({
   const [error, setError] = useState<string | null>(null);
 
   async function handleFile(file: File) {
-    setUploading(true);
     setError(null);
+
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      setError("Неподдерживаемый формат. Разрешены JPEG, PNG, WebP, AVIF.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError("Файл слишком большой. Максимум 5 МБ.");
+      return;
+    }
+
+    setUploading(true);
     try {
       const supabase = createClient();
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -50,7 +68,7 @@ export default function ImageUpload({
       <div className="flex items-center gap-4">
         <div className="w-20 h-20 rounded-[12px] border border-[#0A0A0A]/10 bg-[#F5F0E8] overflow-hidden flex items-center justify-center shrink-0">
           {value ? (
-            <Image src={value} alt="" width={80} height={80} className="w-full h-full object-cover" />
+            <Image src={value} alt="Текущее изображение" width={80} height={80} className="w-full h-full object-cover" />
           ) : (
             <span className="w-6 h-6 text-[#0A0A0A]/25">
               <ImageIcon />
@@ -62,7 +80,7 @@ export default function ImageUpload({
             {uploading ? "Загружаем…" : value ? "Заменить фото" : "Загрузить фото"}
             <input
               type="file"
-              accept="image/*"
+              accept={ALLOWED_MIME_TYPES.join(",")}
               className="hidden"
               disabled={uploading}
               onChange={(e) => {
