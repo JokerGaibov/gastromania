@@ -161,6 +161,69 @@ export type Database = {
           },
         ]
       }
+      order_revisions: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          customer_confirmed: boolean
+          id: string
+          new_comment: string | null
+          new_items: Json
+          new_total: number
+          old_comment: string | null
+          old_items: Json
+          old_total: number
+          order_id: string
+          reason_code: string
+          reason_note: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          customer_confirmed: boolean
+          id?: string
+          new_comment?: string | null
+          new_items: Json
+          new_total: number
+          old_comment?: string | null
+          old_items: Json
+          old_total: number
+          order_id: string
+          reason_code: string
+          reason_note?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          customer_confirmed?: boolean
+          id?: string
+          new_comment?: string | null
+          new_items?: Json
+          new_total?: number
+          old_comment?: string | null
+          old_items?: Json
+          old_total?: number
+          order_id?: string
+          reason_code?: string
+          reason_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_revisions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_revisions_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           comment: string | null
@@ -174,9 +237,11 @@ export type Database = {
           id: string
           order_number: number
           order_status: string
+          paid_amount: number | null
           paid_at: string | null
           payment_method: string
           payment_status: string
+          pending_balance_amount: number
           profile_id: string | null
           provider_payment_id: string | null
           total_amount: number
@@ -193,9 +258,11 @@ export type Database = {
           id?: string
           order_number?: number
           order_status?: string
+          paid_amount?: number | null
           paid_at?: string | null
           payment_method?: string
           payment_status?: string
+          pending_balance_amount?: number
           profile_id?: string | null
           provider_payment_id?: string | null
           total_amount: number
@@ -212,9 +279,11 @@ export type Database = {
           id?: string
           order_number?: number
           order_status?: string
+          paid_amount?: number | null
           paid_at?: string | null
           payment_method?: string
           payment_status?: string
+          pending_balance_amount?: number
           profile_id?: string | null
           provider_payment_id?: string | null
           total_amount?: number
@@ -347,6 +416,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_order_items: {
+        Args: {
+          p_order_id: string
+          p_items: Json
+          p_reason_code: string
+          p_customer_confirmed: boolean
+          p_comment: string | null
+          p_reason_note?: string | null
+        }
+        Returns: Json
+      }
+      cancel_own_order: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
       create_order: {
         Args: {
           p_items: Json
