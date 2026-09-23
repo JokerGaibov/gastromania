@@ -234,6 +234,17 @@ export default function CheckoutForm({
             Минимальная сумма заказа — {settings.minOrderAmount} ₽. Добавьте ещё блюд.
           </p>
         )}
+
+        {/* До create_order() состав — это ещё корзина, а не заказ: менять
+            её можно и здесь (кнопки выше), и вернувшись в меню. */}
+        <button
+          type="button"
+          onClick={() => router.push("/delivery")}
+          className="label-refined text-[#8C7355] hover:text-[#0A0A0A] transition-colors duration-300 mt-5"
+          style={{ fontSize: "0.6875rem" }}
+        >
+          ← Вернуться к корзине
+        </button>
       </div>
 
       {/* Contact + delivery form */}

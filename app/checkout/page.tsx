@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Footer from "../components/Footer";
 import CheckoutForm from "./CheckoutForm";
+import PublicHeader from "../components/PublicHeader";
+import { getPublicNavState } from "@/lib/auth/publicNav";
 
 export const metadata: Metadata = {
   title: "Оформление заказа — Gastromania",
 };
 
 export default async function CheckoutPage() {
+  const nav = await getPublicNavState();
   const supabase = await createClient();
 
   const [{ data: settings }, {
@@ -33,30 +35,7 @@ export default async function CheckoutPage() {
   return (
     <>
       <main className="bg-[#F5F0E8] min-h-screen">
-        <header className="border-b border-[#0A0A0A]/8">
-          <div className="max-w-screen-xl mx-auto px-8 lg:px-16 h-20 flex items-center justify-between">
-            <Link href="/" className="flex flex-col leading-none">
-              <span
-                style={{ fontFamily: "var(--font-playfair)", fontWeight: 400, letterSpacing: "0.25em", fontSize: "0.875rem" }}
-                className="text-[#0A0A0A] uppercase"
-              >
-                Gastromania
-              </span>
-              <span
-                style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
-                className="text-[#8C7355] uppercase mt-0.5"
-              >
-                Москва · м. Дубровка
-              </span>
-            </Link>
-            <Link
-              href="/delivery"
-              className="label-refined text-[#0A0A0A]/50 hover:text-[#0A0A0A] transition-colors duration-300"
-            >
-              ← К меню
-            </Link>
-          </div>
-        </header>
+        <PublicHeader {...nav} />
 
         <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-16 lg:py-20">
           <div className="mb-10">

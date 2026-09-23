@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Footer from "../components/Footer";
+import PublicHeader from "../components/PublicHeader";
+import { getPublicNavState } from "@/lib/auth/publicNav";
 
 export const metadata: Metadata = {
   title: "Политика конфиденциальности — Gastromania",
@@ -23,36 +24,12 @@ const sections = [
   { id: "changes", title: "10. Изменения политики" },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const nav = await getPublicNavState();
   return (
     <>
       <main className="bg-[#F5F0E8] min-h-screen">
-        {/* Minimal page header — not the marketing Navigation, since its
-            section links assume homepage anchors that don't exist here. */}
-        <header className="border-b border-[#0A0A0A]/8">
-          <div className="max-w-screen-xl mx-auto px-8 lg:px-16 h-20 flex items-center justify-between">
-            <Link href="/" className="flex flex-col leading-none">
-              <span
-                style={{ fontFamily: "var(--font-playfair)", fontWeight: 400, letterSpacing: "0.25em", fontSize: "0.875rem" }}
-                className="text-[#0A0A0A] uppercase"
-              >
-                Gastromania
-              </span>
-              <span
-                style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
-                className="text-[#8C7355] uppercase mt-0.5"
-              >
-                Москва · м. Дубровка
-              </span>
-            </Link>
-            <Link
-              href="/"
-              className="label-refined text-[#0A0A0A]/50 hover:text-[#0A0A0A] transition-colors duration-300"
-            >
-              ← На главную
-            </Link>
-          </div>
-        </header>
+        <PublicHeader {...nav} />
 
         <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-20 lg:py-28">
           {/* Intro */}

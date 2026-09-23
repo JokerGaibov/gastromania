@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import PublicHeader from "../../components/PublicHeader";
+import { getPublicNavState } from "@/lib/auth/publicNav";
+import CancelOrderButton from "./CancelOrderButton";
 
 export const metadata: Metadata = {
   title: "Мои заказы — Gastromania",
@@ -34,6 +37,7 @@ function formatDateTime(iso: string): string {
 }
 
 export default async function AccountOrdersPage() {
+  const nav = await getPublicNavState();
   const supabase = await createClient();
 
   // RLS (orders_select_own_or_admin / order_items_select_own_or_admin,
@@ -49,27 +53,7 @@ export default async function AccountOrdersPage() {
 
   return (
     <main className="bg-[#F5F0E8] min-h-screen">
-      <header className="border-b border-[#0A0A0A]/8">
-        <div className="max-w-screen-xl mx-auto px-8 lg:px-16 h-20 flex items-center justify-between">
-          <Link href="/" className="flex flex-col leading-none">
-            <span
-              style={{ fontFamily: "var(--font-playfair)", fontWeight: 400, letterSpacing: "0.25em", fontSize: "0.875rem" }}
-              className="text-[#0A0A0A] uppercase"
-            >
-              Gastromania
-            </span>
-            <span
-              style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
-              className="text-[#8C7355] uppercase mt-0.5"
-            >
-              Москва · м. Дубровка
-            </span>
-          </Link>
-          <Link href="/" className="label-refined text-[#0A0A0A]/50 hover:text-[#0A0A0A] transition-colors duration-300">
-            ← На главную
-          </Link>
-        </div>
-      </header>
+      <PublicHeader {...nav} />
 
       <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-16 lg:py-20">
         <div className="mb-10">
@@ -91,48 +75,74 @@ export default async function AccountOrdersPage() {
         )}
 
         <div className="grid gap-5 max-w-2xl">
-          {(orders ?? []).map((order) => (
-            <div
-              key={order.id}
-              className="rounded-[20px] border border-[#0A0A0A]/8 bg-white p-6 shadow-[0_4px_16px_-8px_rgba(10,10,10,0.08)]"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                <div>
-                  <p className="text-[#0A0A0A]/40 text-xs font-body">Заказ #{order.order_number}</p>
-                  <p className="text-[#0A0A0A]/40 text-xs font-body">{formatDateTime(order.created_at)}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <span className="label-refined px-3 py-1 rounded-full bg-[#0A0A0A]/5 text-[#0A0A0A]/70" style={{ fontSize: "0.625rem" }}>
-                    {ORDER_STATUS_LABELS[order.order_status] ?? order.order_status}
-                  </span>
-                  <span
-                    className={`label-refined px-3 py-1 rounded-full ${
-                      order.payment_status === "paid" ? "bg-[#3F6B4F]/10 text-[#3F6B4F]" : "bg-[#B3564A]/10 text-[#B3564A]"
-                    }`}
-                    style={{ fontSize: "0.625rem" }}
-                  >
-                    {PAYMENT_STATUS_LABELS[order.payment_status] ?? order.payment_status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5 mb-4">
-                {order.order_items?.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm font-body text-[#0A0A0A]/70">
-                    <span>
-                      {item.name} × {item.quantity}
-                    </span>
-                    <span>{item.subtotal} ₽</span>
+          {(orders ?? []).map((order) => {
+            const isCancelled = order.order_status === "cancelled";
+            // Самостоятельная отмена — только пока ресторан не принял
+            // заказ в работу и он не оплачен. Ровно те же два условия
+            // проверяет cancel_own_order() в БД, здесь это только вопрос
+            // показывать кнопку или нет.
+            const canSelfCancel = order.order_status === "new" && order.payment_status === "pending";
+            return (
+              <div
+                key={order.id}
+                className={`rounded-[20px] border border-[#0A0A0A]/8 bg-white p-6 shadow-[0_4px_16px_-8px_rgba(10,10,10,0.08)] ${
+                  isCancelled ? "opacity-70" : ""
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                  <div>
+                    <p className="text-[#0A0A0A]/40 text-xs font-body">Заказ #{order.order_number}</p>
+                    <p className="text-[#0A0A0A]/40 text-xs font-body">{formatDateTime(order.created_at)}</p>
                   </div>
-                ))}
-              </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <span
+                      className={`label-refined px-3 py-1 rounded-full ${
+                        isCancelled ? "bg-[#B3564A]/12 text-[#B3564A]" : "bg-[#0A0A0A]/5 text-[#0A0A0A]/70"
+                      }`}
+                      style={{ fontSize: "0.625rem" }}
+                    >
+                      {ORDER_STATUS_LABELS[order.order_status] ?? order.order_status}
+                    </span>
+                    {/* У отменённого заказа статус оплаты уже не имеет смысла —
+                        красное «Ожидает оплаты» рядом с «Отменён» только
+                        пугало бы клиента. */}
+                    {!isCancelled && (
+                      <span
+                        className={`label-refined px-3 py-1 rounded-full ${
+                          order.payment_status === "paid" ? "bg-[#3F6B4F]/10 text-[#3F6B4F]" : "bg-[#B3564A]/10 text-[#B3564A]"
+                        }`}
+                        style={{ fontSize: "0.625rem" }}
+                      >
+                        {PAYMENT_STATUS_LABELS[order.payment_status] ?? order.payment_status}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-              <div className="flex justify-between text-[#0A0A0A] font-medium text-sm font-body pt-3 border-t border-[#0A0A0A]/8">
-                <span>Итого</span>
-                <span>{order.total_amount} ₽</span>
+                <div className="flex flex-col gap-1.5 mb-4">
+                  {order.order_items?.map((item) => (
+                    <div key={item.id} className="flex justify-between text-sm font-body text-[#0A0A0A]/70">
+                      <span>
+                        {item.name} × {item.quantity}
+                      </span>
+                      <span>{item.subtotal} ₽</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between text-[#0A0A0A] font-medium text-sm font-body pt-3 border-t border-[#0A0A0A]/8">
+                  <span>Итого</span>
+                  <span>{order.total_amount} ₽</span>
+                </div>
+
+                {canSelfCancel && (
+                  <div className="mt-4 pt-3 border-t border-[#0A0A0A]/8">
+                    <CancelOrderButton orderId={order.id} orderNumber={order.order_number} />
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </main>

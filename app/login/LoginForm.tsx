@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import FieldShell from "../components/reservation/FieldShell";
@@ -115,6 +116,16 @@ export default function LoginForm({ nextPath }: { nextPath?: string }) {
           />
         </FieldShell>
 
+        <p className="-mt-2 text-right">
+          <Link
+            href="/forgot-password"
+            className="label-refined text-[#0A0A0A]/40 hover:text-[#8C7355] transition-colors duration-300"
+            style={{ fontSize: "0.6875rem" }}
+          >
+            Забыли пароль?
+          </Link>
+        </p>
+
         {status === "error" && serverError && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
@@ -146,6 +157,16 @@ export default function LoginForm({ nextPath }: { nextPath?: string }) {
             <span className="absolute inset-0 bg-[#8C7355] translate-y-full group-hover:translate-y-0 transition-transform duration-500" style={{ transitionTimingFunction: "cubic-bezier(0.25,0.46,0.45,0.94)" }} />
           )}
         </motion.button>
+
+        <p className="text-center text-sm font-body text-[#0A0A0A]/50" style={{ letterSpacing: "0.01em" }}>
+          Нет аккаунта?{" "}
+          <Link
+            href={nextPath ? `/register?next=${encodeURIComponent(nextPath)}` : "/register"}
+            className="text-[#8C7355] underline underline-offset-2 hover:text-[#0A0A0A] transition-colors"
+          >
+            Зарегистрироваться
+          </Link>
+        </p>
       </form>
     </motion.div>
   );

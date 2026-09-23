@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Footer from "../components/Footer";
 import DeliveryMenuGrid from "./DeliveryMenuGrid";
 import CartBar from "./CartBar";
+import PublicHeader from "../components/PublicHeader";
+import { getPublicNavState } from "@/lib/auth/publicNav";
 
 export const metadata: Metadata = {
   title: "Доставка — Gastromania",
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DeliveryPage() {
+  const nav = await getPublicNavState();
   const supabase = await createClient();
 
   const [{ data: items, error }, { data: settings }] = await Promise.all([
@@ -22,7 +24,7 @@ export default async function DeliveryPage() {
       .order("sort_order", { ascending: true }),
     supabase
       .from("delivery_settings")
-      .select("is_delivery_enabled, min_order_amount, zones")
+      .select("is_delivery_enabled, min_order_amount, delivery_fee, free_delivery_from, zones")
       .eq("id", 1)
       .single(),
   ]);
@@ -33,30 +35,7 @@ export default async function DeliveryPage() {
   return (
     <>
       <main className="bg-[#F5F0E8] min-h-screen pb-28">
-        <header className="border-b border-[#0A0A0A]/8">
-          <div className="max-w-screen-xl mx-auto px-8 lg:px-16 h-20 flex items-center justify-between">
-            <Link href="/" className="flex flex-col leading-none">
-              <span
-                style={{ fontFamily: "var(--font-playfair)", fontWeight: 400, letterSpacing: "0.25em", fontSize: "0.875rem" }}
-                className="text-[#0A0A0A] uppercase"
-              >
-                Gastromania
-              </span>
-              <span
-                style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
-                className="text-[#8C7355] uppercase mt-0.5"
-              >
-                Москва · м. Дубровка
-              </span>
-            </Link>
-            <Link
-              href="/"
-              className="label-refined text-[#0A0A0A]/50 hover:text-[#0A0A0A] transition-colors duration-300"
-            >
-              ← На главную
-            </Link>
-          </div>
-        </header>
+        <PublicHeader {...nav} />
 
         <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-16 lg:py-20">
           <div className="mb-10">
@@ -94,7 +73,13 @@ export default async function DeliveryPage() {
         </div>
       </main>
       <Footer />
-      <CartBar />
+      <CartBar
+        settings={{
+          deliveryFee: settings?.delivery_fee ?? 0,
+          freeDeliveryFrom: settings?.free_delivery_from ?? null,
+          minOrderAmount: settings?.min_order_amount ?? 0,
+        }}
+      />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import Navigation from "./components/Navigation";
+import PublicHeader from "./components/PublicHeader";
 import Hero from "./components/Hero";
 import Story from "./components/Story";
 import Chef from "./components/Chef";
@@ -8,6 +8,7 @@ import Contact from "./components/Contact";
 import CallToAction from "./components/CallToAction";
 import Footer from "./components/Footer";
 import MobileContactCTA from "./components/MobileContactCTA";
+import { getPublicNavState } from "@/lib/auth/publicNav";
 
 // SignatureDishes is deliberately not rendered — its dish content is
 // invented Nordic-tasting-menu copy that doesn't match this restaurant's
@@ -15,10 +16,14 @@ import MobileContactCTA from "./components/MobileContactCTA";
 // deleted — see gastromania-tasks.md Блок 12 for bringing it back once
 // there's a real menu to put in it.
 
-export default function Home() {
+export default async function Home() {
+  // Сессия и роль определяются здесь, на сервере, а не эффектом в шапке —
+  // иначе возвращается flicker «Войти → Аккаунт» (main.md v0.1.30).
+  const nav = await getPublicNavState();
+
   return (
     <main>
-      <Navigation />
+      <PublicHeader variant="overlay" {...nav} />
       <Hero />
       <Story />
       <Chef />
