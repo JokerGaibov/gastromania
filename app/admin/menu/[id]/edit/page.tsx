@@ -23,7 +23,7 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
 
   const { data: item } = await supabase
     .from("menu_items")
-    .select("id, name, description, price, category, image_url, is_active, sort_order")
+    .select("id, name, description, price, category, image_url, is_active, available_for_delivery, sort_order")
     .eq("id", id)
     .single();
 
@@ -45,6 +45,7 @@ export default async function EditMenuItemPage({ params }: { params: Promise<{ i
           category: item.category,
           imageUrl: item.image_url ?? "",
           isActive: item.is_active,
+          availableForDelivery: item.available_for_delivery,
           sortOrder: item.sort_order ?? 0,
         }}
         onSubmit={boundUpdate}

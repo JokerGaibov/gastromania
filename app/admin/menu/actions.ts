@@ -14,6 +14,7 @@ export type MenuItemInput = {
   category: string;
   imageUrl: string;
   isActive: boolean;
+  availableForDelivery: boolean;
   sortOrder: number;
 };
 
@@ -59,6 +60,7 @@ export async function createMenuItem(input: MenuItemInput): Promise<ActionResult
     category: input.category,
     image_url: input.imageUrl.trim() || null,
     is_active: input.isActive,
+    available_for_delivery: input.availableForDelivery,
     sort_order: input.sortOrder,
   });
 
@@ -87,6 +89,7 @@ export async function updateMenuItem(id: string, input: MenuItemInput): Promise<
       category: input.category,
       image_url: input.imageUrl.trim() || null,
       is_active: input.isActive,
+      available_for_delivery: input.availableForDelivery,
       sort_order: input.sortOrder,
     })
     .eq("id", id);

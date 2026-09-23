@@ -79,6 +79,7 @@ export type Database = {
       }
       menu_items: {
         Row: {
+          available_for_delivery: boolean
           category: string
           created_at: string
           description: string | null
@@ -90,6 +91,7 @@ export type Database = {
           sort_order: number | null
         }
         Insert: {
+          available_for_delivery?: boolean
           category: string
           created_at?: string
           description?: string | null
@@ -101,6 +103,7 @@ export type Database = {
           sort_order?: number | null
         }
         Update: {
+          available_for_delivery?: boolean
           category?: string
           created_at?: string
           description?: string | null

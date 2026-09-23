@@ -30,7 +30,7 @@ export default async function AdminMenuPage() {
   // the stop-list.
   const { data: items, error } = await supabase
     .from("menu_items")
-    .select("id, name, description, price, category, image_url, is_active, sort_order")
+    .select("id, name, description, price, category, image_url, is_active, available_for_delivery, sort_order")
     .order("category", { ascending: true })
     .order("sort_order", { ascending: true });
 
@@ -101,7 +101,17 @@ export default async function AdminMenuPage() {
                       {item.description && (
                         <p className="text-[#0A0A0A]/45 text-xs font-body line-clamp-2">{item.description}</p>
                       )}
-                      <p className="text-[#8C7355] font-body text-sm mt-1">{item.price} ₽</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <p className="text-[#8C7355] font-body text-sm">{item.price} ₽</p>
+                        {item.available_for_delivery && (
+                          <span
+                            className="label-refined px-2 py-0.5 rounded-full bg-[#8C7355]/12 text-[#8C7355]"
+                            style={{ fontSize: "0.5625rem" }}
+                          >
+                            Доставка
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-4 shrink-0">

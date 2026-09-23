@@ -22,6 +22,14 @@ export default function MenuItemForm({ initial, onSubmit, submitLabel }: Props) 
   const [category, setCategory] = useState(initial?.category ?? MENU_CATEGORIES[0].value);
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+  // Новое блюдо создаётся доступным для доставки (тот же дефолт, что и в
+  // БД — 20260923110000): возим почти всё, исключения админ выключает
+  // руками. При редактировании initial всегда приходит из БД реальным
+  // boolean, поэтому ?? срабатывает только для формы создания и текущее
+  // false существующего блюда не подменяется.
+  const [availableForDelivery, setAvailableForDelivery] = useState(
+    initial?.availableForDelivery ?? true
+  );
   const [sortOrder, setSortOrder] = useState(
     initial?.sortOrder !== undefined ? String(initial.sortOrder) : "0"
   );
@@ -55,6 +63,7 @@ export default function MenuItemForm({ initial, onSubmit, submitLabel }: Props) 
       category,
       imageUrl,
       isActive,
+      availableForDelivery,
       sortOrder: Number(sortOrder) || 0,
     });
 
@@ -139,6 +148,24 @@ export default function MenuItemForm({ initial, onSubmit, submitLabel }: Props) 
         />
         <span className="text-[#0A0A0A]/80 text-sm font-body">
           В наличии (не в стоп-листе)
+        </span>
+      </label>
+
+      {/* Независимо от категории: категория описывает, что это за блюдо,
+          а этот флаг — возим ли мы его. Стоп-лист выше сильнее: снятое с
+          продажи блюдо в доставке не покажется и с этой галочкой. */}
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={availableForDelivery}
+          onChange={(e) => setAvailableForDelivery(e.target.checked)}
+          className="mt-0.5 w-5 h-5 accent-[#8C7355]"
+        />
+        <span className="text-[#0A0A0A]/80 text-sm font-body">
+          Доступно для доставки
+          <span className="block text-[#0A0A0A]/45 text-xs">
+            Блюдо появится в меню на /delivery, если оно не в стоп-листе
+          </span>
         </span>
       </label>
 

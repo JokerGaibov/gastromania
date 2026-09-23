@@ -16,10 +16,15 @@ export default async function DeliveryPage() {
   const supabase = await createClient();
 
   const [{ data: items, error }, { data: settings }] = await Promise.all([
+    // Категория блюда («узбекский», «фирменные блюда», десерты…) больше
+    // не решает, возим ли мы его — за это отвечает отдельный флаг
+    // available_for_delivery (20260923100000). is_active остаётся
+    // стоп-листом и сильнее флага: снятое с продажи блюдо здесь не
+    // появится, даже если оно помечено доступным для доставки.
     supabase
       .from("menu_items")
       .select("id, name, description, price, image_url")
-      .eq("category", "delivery")
+      .eq("available_for_delivery", true)
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase
