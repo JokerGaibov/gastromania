@@ -32,10 +32,20 @@ export default function Contact() {
           <span className="label-refined text-[#8C7355]">Как нас найти</span>
         </motion.div>
 
-        <div className="grid lg:grid-cols-12 gap-16 lg:gap-24 mb-20 lg:mb-28">
+        {/* gap-24 (96px) только с xl (1280px+), не с lg — на 12-колоночной
+            сетке 11 внутренних gap по 96px уже сами по себе шире, чем
+            доступная ширина контента на 1024px (частый реальный breakpoint,
+            iPad landscape), и вся секция уезжала вправо, создавая
+            горизонтальный скролл страницы. gap-16 на диапазоне
+            1024–1279px визуально почти не отличается от прежнего. */}
+        <div className="grid lg:grid-cols-12 gap-16 xl:gap-24 mb-20 lg:mb-28">
 
-          {/* Large headline */}
-          <div className="lg:col-span-5">
+          {/* Large headline. min-w-0: без этого grid-колонка не сжимается
+              уже своего содержимого (дефолт min-width:auto у grid-item'ов) —
+              «Прочувствуйте.» как один неразрывный кириллический токен
+              раздвигал всю секцию и давал горизонтальный скролл страницы
+              на 320–375px. */}
+          <div className="lg:col-span-5 min-w-0">
             {["Придите.", "Прочувствуйте.", "Запомните."].map((word, i) => (
               <div key={word} className="overflow-hidden mb-1">
                 <motion.h2
@@ -43,7 +53,15 @@ export default function Contact() {
                   animate={inView ? { y: "0%" } : {}}
                   transition={{ duration: 1, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
                   className={`heading-editorial ${i === 1 ? "italic text-[#8C7355]" : "text-[#F5F0E8]"}`}
-                  style={{ fontSize: "clamp(3rem,6vw,5.5rem)", lineHeight: 1 }}
+                  // Нижняя граница clamp() была 3rem (48px) — на экранах
+                  // уже ~600px это и есть фактический размер (6vw ещё
+                  // меньше), а "Прочувствуйте." на 48px не помещается в
+                  // доступную ширину на 320–375px даже после min-w-0 (слово
+                  // просто обрезалось бы). 2.25rem — всё ещё крупный
+                  // редакционный заголовок, но укладывается с запасом.
+                  // Верхняя граница (5.5rem) и поведение на планшетах/
+                  // десктопе не меняются — там 6vw давно больше 2.25rem.
+                  style={{ fontSize: "clamp(2.25rem,6vw,5.5rem)", lineHeight: 1 }}
                 >
                   {word}
                 </motion.h2>

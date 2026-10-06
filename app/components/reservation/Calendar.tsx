@@ -109,7 +109,18 @@ export default function Calendar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="absolute z-20 mt-2 w-[300px] rounded-[16px] border border-[#0A0A0A]/10 bg-white shadow-[0_16px_40px_-8px_rgba(10,10,10,0.18)] p-4"
+            // Дропдаун не центрирован — его левый край совпадает с левым
+            // краем поля (static position), которое само сдвинуто вправо на
+            // page px-8 (32px) + card p-7 (28px) = 60px и не меняется на
+            // всём диапазоне <640px (sm:grid-cols-2 и sm:p-10 ещё не
+            // активны). При фиксированной w-[300px] на 320px экране правый
+            // край уезжал на 341px — на 21px за пределы viewport, и секция
+            // Reservation обрезает это через overflow-hidden (контент
+            // молча невидим, а не скроллится). calc(100vw-5rem) = доступная
+            // ширина вьюпорта минус эти 60px смещения минус ещё 20px
+            // запаса с правого края; min(300px, …) не меняет размер там,
+            // где и так было достаточно места (сейчас это от ~380px).
+            className="absolute z-20 mt-2 w-[min(300px,calc(100vw-5rem))] rounded-[16px] border border-[#0A0A0A]/10 bg-white shadow-[0_16px_40px_-8px_rgba(10,10,10,0.18)] p-4"
           >
             <div className="flex items-center justify-between mb-3">
               <button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { smoothScrollTo } from "@/lib/motion";
@@ -21,7 +21,14 @@ export default function Hero() {
   return (
     <section
       ref={containerRef}
-      className="relative h-screen min-h-[700px] overflow-hidden flex items-end"
+      // h-dvh, not h-screen: контент закреплён снизу (items-end) внутри
+      // overflow-hidden секции — на мобильном Safari 100vh считается так,
+      // будто адресная строка уже скрыта, и часть нижнего контента
+      // (кнопка "Забронировать столик") может оказаться под реально ещё
+      // видимым тулбаром. 100dvh всегда отражает фактическую видимую
+      // высоту. min-h-[700px] остаётся — это отдельная защита от слишком
+      // короткого хиро на очень низких экранах, тут dvh/vh не влияет.
+      className="relative h-dvh min-h-[700px] overflow-hidden flex items-end"
     >
       {/* Background Image with Parallax */}
       <motion.div style={{ y: imageY }} className="absolute inset-0 scale-110">

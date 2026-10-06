@@ -24,7 +24,7 @@ const NAV_ITEMS = [
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-[#F5F0E8] min-h-screen">
+    <div className="bg-[#F5F0E8] min-h-dvh">
       <header className="border-b border-[#0A0A0A]/8 bg-white">
         <div className="max-w-screen-xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8 overflow-x-auto">

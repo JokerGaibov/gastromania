@@ -35,7 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!canAccessAdminPanel(profile?.role)) {
     return (
-      <main className="bg-[#F5F0E8] min-h-screen flex items-center justify-center px-8">
+      <main className="bg-[#F5F0E8] min-h-dvh flex items-center justify-center px-8">
         <div className="w-full max-w-[440px] rounded-[24px] border border-[#0A0A0A]/8 bg-white shadow-[0_30px_80px_-24px_rgba(10,10,10,0.2)] p-10 text-center">
           <span className="label-refined text-[#B3564A] block mb-4">Доступ запрещён</span>
           <h1 className="heading-editorial text-[#0A0A0A] mb-4" style={{ fontSize: "1.75rem" }}>

@@ -25,7 +25,7 @@ export default async function ResetPasswordPage() {
 
   return (
     <>
-      <main className="bg-[#F5F0E8] min-h-screen">
+      <main className="bg-[#F5F0E8] min-h-dvh">
         <PublicHeader {...nav} />
 
         <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-20 lg:py-28 flex justify-center">

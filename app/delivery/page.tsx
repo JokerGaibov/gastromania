@@ -39,7 +39,7 @@ export default async function DeliveryPage() {
 
   return (
     <>
-      <main className="bg-[#F5F0E8] min-h-screen pb-28">
+      <main className="bg-[#F5F0E8] min-h-dvh pb-28">
         <PublicHeader {...nav} />
 
         <div className="max-w-screen-xl mx-auto px-8 lg:px-16 py-16 lg:py-20">
