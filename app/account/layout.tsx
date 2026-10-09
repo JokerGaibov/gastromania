@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Личный кабинет — Gastromania",
+  robots: NO_INDEX,
+};
 
 // Guard only — any signed-in user (customer or admin) may be here, unlike
 // app/admin/layout.tsx which additionally checks role. Same x-pathname

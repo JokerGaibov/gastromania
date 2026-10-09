@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import Footer from "../components/Footer";
 import CheckoutForm from "./CheckoutForm";
@@ -7,6 +8,7 @@ import { getPublicNavState } from "@/lib/auth/publicNav";
 
 export const metadata: Metadata = {
   title: "Оформление заказа — Gastromania",
+  robots: NO_INDEX,
 };
 
 export default async function CheckoutPage() {

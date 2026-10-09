@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import Link from "next/link";
 import Footer from "../components/Footer";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,7 @@ import { getPublicNavState } from "@/lib/auth/publicNav";
 export const metadata: Metadata = {
   title: "Новый пароль — Gastromania",
   description: "Установите новый пароль для аккаунта Gastromania.",
+  robots: NO_INDEX,
 };
 
 export default async function ResetPasswordPage() {

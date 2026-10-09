@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import Footer from "../components/Footer";
 import DeliveryMenuGrid from "./DeliveryMenuGrid";
@@ -6,10 +7,12 @@ import CartBar from "./CartBar";
 import PublicHeader from "../components/PublicHeader";
 import { getPublicNavState } from "@/lib/auth/publicNav";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Доставка — Gastromania",
-  description: "Меню Gastromania на заказ с доставкой.",
-};
+  description:
+    "Закажите блюда ресторана Gastromania с доставкой: выберите позиции из меню и оформите заказ на сайте.",
+  path: "/delivery",
+});
 
 export default async function DeliveryPage() {
   const nav = await getPublicNavState();

@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import Footer from "../components/Footer";
 import PublicHeader from "../components/PublicHeader";
 import { getPublicNavState } from "@/lib/auth/publicNav";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Акции — Gastromania",
-  description: "Текущие акции и предложения ресторана Gastromania.",
-};
+  description: "Текущие акции и специальные предложения ресторана Gastromania у метро Дубровка.",
+  path: "/promotions",
+});
 
 function formatDateRange(startsAt: string | null, endsAt: string | null): string | null {
   if (!startsAt && !endsAt) return null;

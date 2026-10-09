@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Footer from "../components/Footer";
 import PublicHeader from "../components/PublicHeader";
 import { getPublicNavState } from "@/lib/auth/publicNav";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Политика конфиденциальности — Gastromania",
   description:
     "Как Gastromania собирает, использует и защищает персональные данные гостей при бронировании столика.",
-};
+  path: "/privacy",
+});
 
 const LAST_UPDATED = "22 августа 2026";
 

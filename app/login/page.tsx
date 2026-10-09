@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import Footer from "../components/Footer";
 import LoginForm from "./LoginForm";
 import PublicHeader from "../components/PublicHeader";
@@ -7,6 +8,7 @@ import { getPublicNavState } from "@/lib/auth/publicNav";
 export const metadata: Metadata = {
   title: "Вход — Gastromania",
   description: "Вход для гостей и персонала Gastromania.",
+  robots: NO_INDEX,
 };
 
 export default async function LoginPage({

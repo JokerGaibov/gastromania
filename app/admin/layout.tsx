@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -5,6 +7,11 @@ import { createClient } from "@/lib/supabase/server";
 import { canAccessAdminPanel } from "@/lib/auth/roles";
 import LogoutButton from "./LogoutButton";
 import AdminShell from "./AdminShell";
+
+export const metadata: Metadata = {
+  title: "Админ-панель — Gastromania",
+  robots: NO_INDEX,
+};
 
 // Real protection lives here (and in RLS) — the guard is a server-side read
 // on every request to a page under this layout, not a client-side check
