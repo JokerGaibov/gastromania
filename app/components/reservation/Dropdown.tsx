@@ -30,6 +30,7 @@ export default function Dropdown({
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const selected = options.find((o) => o.value === value) ?? null;
@@ -70,6 +71,20 @@ export default function Dropdown({
     };
   }, [open, options, highlight, onChange]);
 
+  // Список длинный (время: 27 пунктов), поэтому выбранный или подсвеченный
+  // пункт держим в видимой области, в том числе при навигации стрелками.
+  useEffect(() => {
+    if (!open) return;
+    const list = listRef.current;
+    const el = list?.querySelectorAll<HTMLElement>("li")[highlight];
+    if (!list || !el) return;
+    // Крутим только сам список, а не страницу (scrollIntoView сдвинул бы и её).
+    if (el.offsetTop < list.scrollTop) list.scrollTop = el.offsetTop;
+    else if (el.offsetTop + el.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = el.offsetTop + el.offsetHeight - list.clientHeight;
+    }
+  }, [open, highlight]);
+
   const toggleOpen = () => {
     setHighlight(Math.max(0, options.findIndex((o) => o.value === value)));
     setOpen((v) => !v);
@@ -99,12 +114,13 @@ export default function Dropdown({
       <AnimatePresence>
         {open && (
           <motion.ul
+            ref={listRef}
             role="listbox"
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="absolute z-20 mt-2 w-full max-h-56 overflow-y-auto rounded-[14px] border border-[#0A0A0A]/10 bg-white shadow-[0_16px_40px_-8px_rgba(10,10,10,0.18)] py-1.5"
+            className="absolute z-20 mt-2 w-full max-h-60 overflow-y-auto overscroll-contain rounded-[14px] border border-[#0A0A0A]/10 bg-white shadow-[0_16px_40px_-8px_rgba(10,10,10,0.18)] py-1.5"
           >
             {options.map((opt, i) => (
               <li key={opt.value} role="option" aria-selected={opt.value === value}>

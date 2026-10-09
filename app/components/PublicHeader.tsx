@@ -100,10 +100,10 @@ export default function PublicHeader({
   // Цвета под фон: тёмная шапка поверх hero vs светлая на внутренних.
   const logoClass = isOverlay ? "text-[#F5F0E8]" : "text-[#0A0A0A]";
   const linkClass = isOverlay
-    ? "text-[#F5F0E8]/70 hover:text-[#F5F0E8]"
+    ? "text-[#F5F0E8]/90 hover:text-[#F5F0E8]"
     : "text-[#0A0A0A]/55 hover:text-[#0A0A0A]";
   const accountClass = isOverlay
-    ? "text-[#F5F0E8]/60 hover:text-[#F5F0E8]"
+    ? "text-[#F5F0E8]/85 hover:text-[#F5F0E8]"
     : "text-[#0A0A0A]/55 hover:text-[#0A0A0A]";
   const logoutClass = `label-refined transition-colors duration-300 disabled:opacity-50 ${accountClass}`;
   const dividerClass = isOverlay ? "bg-[rgba(245,240,232,0.2)]" : "bg-[#0A0A0A]/12";
@@ -117,8 +117,26 @@ export default function PublicHeader({
       }`
     : "relative z-30 border-b border-[#0A0A0A]/8 bg-[#F5F0E8]";
 
+  // Читаемость поверх светлых участков hero: мягкий тёмный градиент под шапкой
+  // (исчезает, когда шапка становится плотной при скролле) и лёгкая тень у
+  // текста. Тень наследуется всеми ссылками, золотой active-пункт не меняется.
+  const overHero = isOverlay && !scrolled;
+
   const header = (
-    <div className="max-w-screen-xl mx-auto px-8 lg:px-16 h-20 flex items-center justify-between">
+    <>
+      {isOverlay && (
+        <div
+          aria-hidden="true"
+          className={`absolute inset-x-0 top-0 h-32 sm:h-36 pointer-events-none bg-gradient-to-b from-[#0A0A0A]/75 via-[#0A0A0A]/35 to-transparent transition-opacity duration-700 ${
+            overHero ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      )}
+    <div
+      className={`relative max-w-screen-xl mx-auto px-8 lg:px-16 h-20 flex items-center justify-between ${
+        overHero ? "[text-shadow:0_1px_10px_rgba(10,10,10,0.55)]" : ""
+      }`}
+    >
       {/* Логотип */}
       <button
         type="button"
@@ -133,7 +151,7 @@ export default function PublicHeader({
         </span>
         <span
           style={{ fontFamily: "var(--font-inter)", fontWeight: 300, letterSpacing: "0.3em", fontSize: "0.5rem" }}
-          className="text-[#8C7355] uppercase mt-0.5"
+          className={`uppercase mt-0.5 transition-colors duration-700 ${overHero ? "text-[#C9AE86]" : "text-[#8C7355]"}`}
         >
           Москва · м. Дубровка
         </span>
@@ -160,7 +178,9 @@ export default function PublicHeader({
         <MagneticButton>
           <button
             onClick={() => handleLinkClick(reservationHref)}
-            className="label-refined text-[#8C7355] hover:text-[#0A0A0A] transition-colors duration-300"
+            className={`label-refined transition-colors duration-300 ${
+              isOverlay ? "hover:text-[#F5F0E8]" : "hover:text-[#0A0A0A]"
+            } ${overHero ? "text-[#C9AE86]" : "text-[#8C7355]"}`}
           >
             Брони
           </button>
@@ -197,6 +217,7 @@ export default function PublicHeader({
         />
       </button>
     </div>
+    </>
   );
 
   return (

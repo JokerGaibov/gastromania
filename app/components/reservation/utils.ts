@@ -44,9 +44,24 @@ export function pluralizeGuests(n: number): string {
   return "гостей";
 }
 
-// Operational hours aren't final yet (Этап 2 of gastromania-spec.md will
-// supply the restaurant's real seating times) — these mirror the existing
-// "starting at 19:00, 4-5 hour tasting menu" copy already on the page.
-export const TIME_SLOTS = ["19:00", "19:30", "20:00", "20:30", "21:00", "21:30"];
+// Время бронирования: с 10:00 до 23:00 включительно, шаг 30 минут (27 слотов).
+// Один список для формы и для серверной проверки в actions.ts.
+function buildTimeSlots(fromHour: number, toHour: number): string[] {
+  const slots: string[] = [];
+  for (let h = fromHour; h <= toHour; h++) {
+    slots.push(`${String(h).padStart(2, "0")}:00`);
+    if (h < toHour) slots.push(`${String(h).padStart(2, "0")}:30`);
+  }
+  return slots;
+}
 
-export const GUEST_COUNTS = [1, 2, 3, 4, 5, 6];
+export const TIME_SLOTS = buildTimeSlots(10, 23);
+
+// Верхней границы в базе нет (party_size int not null). 20 — предел выбора в
+// форме; большие компании ресторан согласует отдельно по телефону.
+export const MAX_GUESTS = 20;
+export const GUEST_COUNTS = Array.from({ length: MAX_GUESTS }, (_, i) => i + 1);
+
+// С этого количества гостей показываем подсказку про подтверждение менеджером.
+// Отправку брони она не блокирует.
+export const LARGE_PARTY_FROM = 7;

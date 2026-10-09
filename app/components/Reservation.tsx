@@ -10,6 +10,8 @@ import ConsentCheckbox from "./reservation/ConsentCheckbox";
 import { UserIcon, MailIcon, NoteIcon, ClockIcon, UsersIcon } from "./reservation/icons";
 import {
   GUEST_COUNTS,
+  LARGE_PARTY_FROM,
+  MAX_GUESTS,
   TIME_SLOTS,
   isRuPhoneComplete,
   isValidEmail,
@@ -57,6 +59,7 @@ function validate(form: ReservationForm): FormErrors {
   if (!form.date) errors.date = "Выберите дату";
   if (!form.time) errors.time = "Выберите время";
   if (!form.partySize) errors.partySize = "Укажите количество гостей";
+  else if (form.partySize > MAX_GUESTS) errors.partySize = `Не больше ${MAX_GUESTS} гостей, для большей компании позвоните нам`;
   if (form.guestEmail.trim() && !isValidEmail(form.guestEmail.trim())) {
     errors.guestEmail = "Проверьте адрес email";
   }
@@ -183,9 +186,9 @@ export default function Reservation() {
               transition={{ duration: 0.9, delay: 0.6, ease }}
             >
               <p className="text-[#0A0A0A]/50 text-sm leading-loose font-body mb-10 mt-8" style={{ letterSpacing: "0.02em" }}>
-                Организованные брони принимаются на вечер, начиная с 19:00.
-                Мы принимаем до шести гостей на одно бронирование. Особые требования к питанию
-                учитываются при уведомлении за двадцать четыре часа.
+                Столик можно забронировать на любое время с 10:00 до 23:00.
+                Для больших компаний условия бронирования подтверждаются менеджером ресторана.
+                Особые требования к питанию учитываются при уведомлении за двадцать четыре часа.
               </p>
             </motion.div>
           </div>
@@ -256,7 +259,11 @@ export default function Reservation() {
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-5">
-                      <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                      {/* Обёртки с анимацией создают собственные слои, и более
+                          поздний сосед рисовался поверх открытого списка.
+                          Пока внутри открыт popover (aria-expanded), поднимаем
+                          слой всего поля над остальными. */}
+                      <motion.div variants={fieldVariants} whileHover={fieldHover} className="relative has-[[aria-expanded=true]]:z-30">
                         <Calendar
                           id="res-date"
                           label="Дата"
@@ -266,7 +273,7 @@ export default function Reservation() {
                           error={errors.date}
                         />
                       </motion.div>
-                      <motion.div variants={fieldVariants} whileHover={fieldHover}>
+                      <motion.div variants={fieldVariants} whileHover={fieldHover} className="relative has-[[aria-expanded=true]]:z-30">
                         <Dropdown
                           id="res-time"
                           label="Время"
@@ -278,7 +285,7 @@ export default function Reservation() {
                           error={errors.time}
                         />
                       </motion.div>
-                      <motion.div variants={fieldVariants} whileHover={fieldHover} className="sm:col-span-2">
+                      <motion.div variants={fieldVariants} whileHover={fieldHover} className="sm:col-span-2 relative has-[[aria-expanded=true]]:z-30">
                         <Dropdown
                           id="res-guests"
                           label="Гости"
@@ -289,6 +296,14 @@ export default function Reservation() {
                           onChange={(v) => setField("partySize", Number(v))}
                           error={errors.partySize}
                         />
+                        {form.partySize !== null && form.partySize >= LARGE_PARTY_FROM && (
+                          <p
+                            className="mt-2 ml-1 text-[#0A0A0A]/50 text-xs font-body leading-relaxed"
+                            style={{ letterSpacing: "0.02em" }}
+                          >
+                            Для больших компаний условия бронирования подтверждаются менеджером ресторана.
+                          </p>
+                        )}
                       </motion.div>
                     </div>
 

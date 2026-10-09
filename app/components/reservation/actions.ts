@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { isRuPhoneComplete, isValidEmail } from "./utils";
+import { MAX_GUESTS, TIME_SLOTS, isRuPhoneComplete, isValidEmail } from "./utils";
 
 export type ReservationPayload = {
   guestName: string;
@@ -26,7 +26,13 @@ function validate(payload: ReservationPayload): string | null {
   if (!isRuPhoneComplete(payload.guestPhone)) return "Укажите номер телефона полностью.";
   if (!payload.dateISO) return "Выберите дату.";
   if (!payload.time) return "Выберите время.";
-  if (!payload.partySize || payload.partySize < 1) return "Укажите количество гостей.";
+  if (!TIME_SLOTS.includes(payload.time)) return "Выберите время из списка.";
+  if (!payload.partySize || !Number.isInteger(payload.partySize) || payload.partySize < 1) {
+    return "Укажите количество гостей.";
+  }
+  if (payload.partySize > MAX_GUESTS) {
+    return `Для компаний больше ${MAX_GUESTS} гостей позвоните нам, чтобы согласовать бронь.`;
+  }
   if (payload.guestEmail.trim() && !isValidEmail(payload.guestEmail.trim())) {
     return "Проверьте адрес email.";
   }
