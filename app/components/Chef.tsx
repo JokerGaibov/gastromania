@@ -1,15 +1,13 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { motion, useInView } from "framer-motion";
 
 const ease = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
 
-// No real photos yet (2026-09-12) — see gastromania-tasks.md. Deliberately
-// not using a stock/AI portrait in their place: showing a photo that isn't
-// really them would be worse than showing none. The slot below keeps the
-// exact proportions a real <Image fill> will need, so adding one later is
-// a one-element swap, not a layout change.
+// Фото шефа настоящее (public/chef/ergun-dayi.jpg). Фото остальной команды
+// пока нет, поэтому карточки команды остаются текстовыми.
 const team = [
   {
     name: "Рюстем Умидович",
@@ -47,39 +45,36 @@ export default function Chef() {
         {/* Full-bleed editorial layout */}
         <div className="grid lg:grid-cols-2 min-h-[90vh]">
 
-          {/* Left — photo slot placeholder. Replace this whole <div> with a
-              <MotionImage fill .../> (see Chef.tsx git history before this
-              rewrite for the exact pattern) once a real portrait exists —
-              the parent grid/aspect proportions already match. */}
-          <div ref={imageRef} className="relative overflow-hidden bg-[#1C1C1C] lg:min-h-[90vh] flex items-center justify-center">
+          {/* Слева — портрет шефа. На мобильном держим пропорцию 4:5, на десктопе
+              колонка тянется до высоты текста. Лицо в верхней части кадра,
+              поэтому object-top. */}
+          <div ref={imageRef} className="relative overflow-hidden bg-[#F5F0E8] aspect-[4/5] lg:aspect-auto lg:min-h-[90vh]">
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={imageInView ? { opacity: 1 } : {}}
-              transition={{ duration: 1.2 }}
-              className="absolute inset-0 opacity-[0.04] pointer-events-none"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                backgroundSize: "200px 200px",
-              }}
-            />
-            <motion.span
-              initial={{ opacity: 0, scale: 0.92 }}
+              initial={{ opacity: 0, scale: 1.05 }}
               animate={imageInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 1.2, ease }}
-              className="heading-editorial text-[#F5F0E8]/[0.06] select-none"
-              style={{ fontSize: "clamp(10rem, 22vw, 20rem)", lineHeight: 1 }}
+              transition={{ duration: 1.4, ease }}
+              className="absolute inset-0"
             >
-              ЭД
-            </motion.span>
+              <Image
+                src="/chef/ergun-dayi.jpg"
+                alt="Эргюн Даи, шеф-повар Gastromania"
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover object-top"
+              />
+            </motion.div>
 
-            {/* Floating name badge, same position a photo caption would use */}
+            {/* Затемнение снизу, чтобы подпись читалась на белом кителе */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0A0A0A]/80 via-[#0A0A0A]/30 to-transparent pointer-events-none" />
+
+            {/* Подпись с именем */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={imageInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.9, delay: 0.4 }}
-              className="absolute bottom-12 left-12 z-10"
+              className="absolute bottom-8 left-8 lg:bottom-12 lg:left-12 z-10"
             >
-              <span className="label-refined text-[#8C7355] block mb-2">Шеф-повар</span>
+              <span className="label-refined text-[#C9AE86] block mb-2">Шеф-повар</span>
               <h3 className="heading-editorial text-[#F5F0E8]" style={{ fontSize: "clamp(2rem, 3vw, 2.75rem)" }}>
                 Эргюн Даи
               </h3>
